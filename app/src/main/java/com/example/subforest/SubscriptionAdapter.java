@@ -12,7 +12,7 @@ import java.util.List;
 
 public class SubscriptionAdapter extends RecyclerView.Adapter<SubscriptionAdapter.SubscriptionViewHolder> {
 
-    private List<Subscription> subscriptionList;
+    private final List<Subscription> subscriptionList;
 
     public SubscriptionAdapter(List<Subscription> subscriptionList) {
         this.subscriptionList = subscriptionList;
