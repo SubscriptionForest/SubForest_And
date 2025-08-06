@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.example.subforest'
-    compileSdk 36
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.subforest"
         minSdk 24
-        targetSdk 36
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -30,6 +30,10 @@ android {
 
 dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    // JSON 변환을 위한 Gson
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
     implementation libs.appcompat
     implementation libs.material
