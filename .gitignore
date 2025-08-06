@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local configuration
+local.properties
+
+# IDE settings
+.idea/
+*.iml
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Android Studio captures
+captures/
+.externalNativeBuild/
+
+# Keystore files
+*.jks
+*.keystore
+
+# NDK
+.cxx/
+
+# Crashlytics/Firebase
+fabric.properties
+crashlytics-build.properties
+
+# Unit test reports
+test-output/

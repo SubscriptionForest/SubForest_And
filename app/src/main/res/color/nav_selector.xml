@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 선택된 항목: 연한 녹색 -->
+    <item android:color="#B8DDA1" android:state_checked="true"/>
+    <!-- 비선택 항목: 회색 -->
+    <item android:color="#888888" android:state_checked="false"/>
+</selector>
