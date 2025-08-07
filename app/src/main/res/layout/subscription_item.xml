@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp"
+        android:padding="16dp"
         android:background="@drawable/item_border">
 
         <!-- 서비스명 + 아이콘 -->
@@ -42,7 +42,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_edit"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="15dp"/>
 
             <ImageView
                 android:id="@+id/deleteBtn"
@@ -55,45 +55,64 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:gravity="center_vertical">
+            android:orientation="vertical"
+            android:layout_marginTop="10dp">
 
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_calendar"
-                android:layout_marginEnd="4dp"/>
-
-            <TextView
-                android:id="@+id/period"
+            <!-- 기간 -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="7/25 - 8/25"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <Space android:layout_width="16dp" android:layout_height="wrap_content" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_calendar"
+                    android:layout_marginEnd="4dp"/>
 
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_money"
-                android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:id="@+id/period"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="7/25 - 8/25"/>
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/price"
+            <!-- 가격 -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="5,900원"/>
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_money"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:id="@+id/price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5,900원"/>
+            </LinearLayout>
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="15dp"
+            android:background="@color/green" />
 
         <!-- 하단 상태 텍스트 -->
         <TextView
             android:id="@+id/statusText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="● 다음 결제일 : 8/25"
-            android:textColor="#D32F2F"
-            android:layout_marginTop="8dp"
-            android:textSize="12sp"/>
+            android:text="●  다음 결제일  :  8/25"
+            android:textSize="14sp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

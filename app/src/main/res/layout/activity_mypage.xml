@@ -1,30 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:layout_height="match_parent">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/bottomNavigationView"
-        android:padding="24dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:padding="28dp">
 
-            <!-- 상단 닉네임 -->
-            <TextView
-                android:id="@+id/username"
+            <!-- 닉네임 -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="닉네임 님"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="32dp" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="36dp"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    android:id="@+id/tvNickname"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="닉네임"
+                    android:textSize="28sp" />
+
+                <TextView
+                    android:id="@+id/tvSuffix"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" 님"
+                    android:textSize="20sp" />
+            </LinearLayout>
 
             <!-- 이메일 -->
             <LinearLayout
@@ -32,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="8dp">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -40,20 +53,22 @@
                     android:src="@drawable/ic_profile" />
 
                 <TextView
-                    android:id="@+id/email"
+                    android:id="@+id/tvEmail"
+                    android:layout_marginStart="12dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="email@sample.com" />
+                    android:text="email@example.com"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <!-- 비밀번호 + 변경 -->
             <LinearLayout
+                android:layout_marginTop="24dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="8dp">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -61,28 +76,35 @@
                     android:src="@drawable/ic_password" />
 
                 <TextView
+                    android:id="@+id/tvPassword"
+                    android:layout_marginStart="12dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="************" />
+                    android:text="**********"
+                    android:textSize="16sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
                 <TextView
-                    android:id="@+id/passwordChange"
+                    android:id="@+id/btnChangePassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
                     android:text="비밀번호 변경"
-                    android:textSize="12sp"
-                    android:textColor="#999999" />
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <!-- 알림 설정 -->
             <LinearLayout
+                android:layout_marginTop="24dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="8dp">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -90,27 +112,47 @@
                     android:src="@drawable/ic_notification" />
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="16dp"
-                    android:text="알림 설정" />
-
-                <Switch
-                    android:id="@+id/notificationSwitch"
+                    android:layout_marginStart="12dp"
+                    android:text="알림 설정"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="true" />
+                    android:textSize="16sp" />
+
+                <!-- 오른쪽 정렬용 빈 공간 -->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <!-- "on"/"off" 텍스트 -->
+                <TextView
+                    android:id="@+id/tvNotificationStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="on"
+                    android:textSize="16sp"
+                    android:textColor="@color/green"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- 스위치 -->
+                <Switch
+                    android:id="@+id/switchNotification"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:thumbTint="@color/green"
+                    android:trackTint="@color/green" />
             </LinearLayout>
 
-            <!-- 약관 -->
+            <!-- 서비스 이용 약관 -->
             <LinearLayout
-                android:id="@+id/termsLayout"
+                android:id="@+id/btnTerms"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="8dp">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -118,20 +160,22 @@
                     android:src="@drawable/ic_document" />
 
                 <TextView
+                    android:layout_marginStart="12dp"
+                    android:text="서비스 이용 약관"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="서비스 이용 약관" />
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <!-- 계정 비활성화 -->
             <LinearLayout
-                android:id="@+id/deactivateLayout"
+                android:id="@+id/btnDeactivate"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="8dp">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -139,18 +183,20 @@
                     android:src="@drawable/ic_deactivate" />
 
                 <TextView
+                    android:layout_marginStart="12dp"
+                    android:text="계정 비활성화하기"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="계정 비활성화" />
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <!-- 로그아웃 -->
             <LinearLayout
-                android:id="@+id/logoutLayout"
+                android:id="@+id/btnLogout"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:gravity="center_vertical">
 
                 <ImageView
@@ -159,10 +205,11 @@
                     android:src="@drawable/ic_logout" />
 
                 <TextView
+                    android:layout_marginStart="12dp"
+                    android:text="로그아웃"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="로그아웃" />
+                    android:textSize="16sp" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
@@ -172,9 +219,8 @@
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="@color/white"
+        android:background="@android:color/white"
         app:menu="@menu/bottom_nav_menu"
         app:itemIconTint="@color/nav_selector"
         app:itemTextColor="@color/nav_selector" />
-</RelativeLayout>
+</LinearLayout>

@@ -15,24 +15,17 @@ public class ListActivity extends AppCompatActivity {
 
     RecyclerView recyclerView;
     SubscriptionAdapter adapter;
-    Spinner filterTypeSpinner, sortSpinner;
+    Spinner sortSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
-        filterTypeSpinner = findViewById(R.id.filterTypeSpinner);
         sortSpinner = findViewById(R.id.sortSpinner);
         recyclerView = findViewById(R.id.subscriptionRecyclerView);
 
         // Spinner 설정
-        ArrayAdapter<String> filterAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                new String[]{"전체", "OTT", "음악"});
-        filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        filterTypeSpinner.setAdapter(filterAdapter);
-
         ArrayAdapter<String> sortAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
                 new String[]{"결제일 순", "이름 순", "금액 순"});
