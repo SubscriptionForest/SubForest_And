@@ -1,4 +1,4 @@
-package com.example.subforest;
+package com.example.subforest.ui;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.subforest.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
@@ -27,9 +29,9 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         greetingText = findViewById(R.id.greetingText);
-        totalCostText = findViewById(R.id.totalCostText);
+        totalCostText = findViewById(R.id.monthlyCostValue);
         pieChart = findViewById(R.id.pieChart);
-        addSubscriptionBtn = findViewById(R.id.addSubscriptionBtn);
+        addSubscriptionBtn = findViewById(R.id.addSubscriptionButton);
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
         greetingText.setText("안녕하세요. 00님!");

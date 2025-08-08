@@ -1,10 +1,12 @@
-package com.example.subforest;
+package com.example.subforest.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.subforest.R;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -16,10 +18,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        emailInput = findViewById(R.id.email);
-        passwordInput = findViewById(R.id.password);
-        loginBtn = findViewById(R.id.loginBtn);
-        registerBtn = findViewById(R.id.registerBtn);
+        emailInput = findViewById(R.id.email_edittext);
+        passwordInput = findViewById(R.id.password_edittext);
+        loginBtn = findViewById(R.id.login_button);
+        registerBtn = findViewById(R.id.register_button);
 
         // 로그인 버튼 클릭 → 홈 화면으로 이동
         loginBtn.setOnClickListener(v -> {
