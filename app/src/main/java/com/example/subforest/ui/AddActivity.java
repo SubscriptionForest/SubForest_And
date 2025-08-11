@@ -22,7 +22,6 @@ import androidx.core.content.ContextCompat;
 import com.example.subforest.R;
 import com.example.subforest.network.ApiRepository;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class AddActivity extends AppCompatActivity {

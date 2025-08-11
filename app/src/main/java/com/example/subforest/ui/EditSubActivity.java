@@ -27,7 +27,8 @@ public class EditSubActivity extends AppCompatActivity {
     private EditText amountEdit, dateEdit;
     private Spinner repeatSpinner;
     private Switch autoSwitch, shareSwitch;
-    private Button saveButton, backButton;
+    private Button saveButton;
+    private ImageButton backButton;
 
     private long id;
     @Nullable private Long selectedServiceId = null;

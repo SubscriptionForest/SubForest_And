@@ -24,6 +24,8 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.subforest.HomeActivity;
+import com.example.subforest.LoginActivity;
 import com.example.subforest.R;
 import com.example.subforest.network.ApiRepository;
 import com.example.subforest.network.TokenStore;
