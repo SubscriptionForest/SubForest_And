@@ -14,13 +14,7 @@ import android.text.style.AbsoluteSizeSpan;
 import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.widget.*;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -37,10 +31,8 @@ public class MypageActivity extends AppCompatActivity {
     private static final String PREF_NAME = "UserSettings";
     private static final String PREF_NOTIFICATION = "notification_enabled";
 
-    private TextView tvNickname;
-    private TextView tvEmail;
+    private TextView tvNickname, tvEmail, tvStatus;
     private Switch switchNotification;
-    private TextView tvStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,31 +51,22 @@ public class MypageActivity extends AppCompatActivity {
 
         findViewById(R.id.btnChangePassword).setOnClickListener(v -> showPasswordDialog());
         findViewById(R.id.btnTerms).setOnClickListener(v -> showSimpleDialog());
-        findViewById(R.id.btnDeactivate).setOnClickListener(v -> showConfirmDialog("계정을 비활성화 하시겠습니까?", true));
+        findViewById(R.id.btnDeactivate).setOnClickListener(v -> showConfirmDialog("계정을 탈퇴 하시겠습니까?", true));
         findViewById(R.id.btnLogout).setOnClickListener(v -> showConfirmDialog("로그아웃 하시겠습니까?", false));
 
-        // 알림 스위치 초기화 (로컬 기본값)
         boolean isEnabledLocal = preferences.getBoolean(PREF_NOTIFICATION, true);
         switchNotification.setChecked(isEnabledLocal);
         renderNotifyStatus(isEnabledLocal);
 
-        // 알림 스위치 변경 -> 서버 반영
         switchNotification.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // 로컬 즉시 반영
             preferences.edit().putBoolean(PREF_NOTIFICATION, isChecked).apply();
             renderNotifyStatus(isChecked);
-            // 서버 반영
             ApiRepository.get(this).updateNotification(isChecked, new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
-                @Override public void onSuccess(ApiRepository.UserProfile up) {
-                    // 성공
-                }
-                @Override public void onError(String msg) {
-                    Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
-                }
+                @Override public void onSuccess(ApiRepository.UserProfile up) {}
+                @Override public void onError(String msg) { Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show(); }
             });
         });
 
-        // 하단 네비게이션
         BottomNavigationView nav = findViewById(R.id.bottomNavigationView);
         nav.setSelectedItemId(R.id.nav_profile);
         nav.setOnItemSelectedListener(item -> {
@@ -109,7 +92,6 @@ public class MypageActivity extends AppCompatActivity {
                 if (me != null) {
                     tvNickname.setText(me.name != null ? me.name : "");
                     tvEmail.setText(me.email != null ? me.email : "");
-                    // 서버 상태가 로컬과 다르면 맞춰줌
                     if (me.notificationEnabled != switchNotification.isChecked()) {
                         switchNotification.setChecked(me.notificationEnabled);
                         preferences.edit().putBoolean(PREF_NOTIFICATION, me.notificationEnabled).apply();
@@ -143,7 +125,7 @@ public class MypageActivity extends AppCompatActivity {
 
         Button btn = new Button(this);
         btn.setText("변경");
-        btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
+        btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         );
@@ -197,7 +179,7 @@ public class MypageActivity extends AppCompatActivity {
 
         Button btn = new Button(this);
         btn.setText("확인");
-        btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
+        btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
         btn.setOnClickListener(v -> dialog.dismiss());
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
@@ -231,7 +213,6 @@ public class MypageActivity extends AppCompatActivity {
         yes.setLayoutParams(btnParams);
         yes.setOnClickListener(v -> {
             if (isDeactivate) {
-                // 계정 탈퇴
                 ApiRepository.get(this).deleteAccount(new ApiRepository.RepoCallback<Boolean>() {
                     @Override public void onSuccess(Boolean ok) {
                         new TokenStore(getApplicationContext()).clear();
@@ -244,7 +225,6 @@ public class MypageActivity extends AppCompatActivity {
                     }
                 });
             } else {
-                // 로그아웃
                 new TokenStore(getApplicationContext()).clear();
                 Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
@@ -254,7 +234,7 @@ public class MypageActivity extends AppCompatActivity {
 
         Button no = new Button(this);
         no.setText("아니요");
-        no.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
+        no.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
         no.setLayoutParams(btnParams);
         no.setOnClickListener(v -> dialog.dismiss());
 

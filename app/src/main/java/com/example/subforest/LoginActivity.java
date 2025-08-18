@@ -10,8 +10,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.subforest.api.ApiClient;
-import com.example.subforest.api.ApiService;
+import com.example.subforest.network.ApiClient;
+import com.example.subforest.network.ApiService;
 import com.example.subforest.model.LoginRequest;
 import com.example.subforest.model.LoginResponse;
 import retrofit2.Call;
@@ -41,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
             // LoginRequest 객체 생성 (API 명세에 맞춤)
             LoginRequest loginRequest = new LoginRequest(email, password);
 
-            ApiService apiService = ApiClient.getClient().create(ApiService.class);
+            ApiService apiService = ApiClient.get(this).create(ApiService.class);
             Call<LoginResponse> call = apiService.loginUser(loginRequest);
 
             call.enqueue(new Callback<LoginResponse>() {

@@ -1,43 +1,62 @@
 package com.example.subforest.network;
 
 import android.content.Context;
-
 import com.example.subforest.BuildConfig;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.util.concurrent.TimeUnit;
-
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public final class ApiClient {
-    private static Retrofit retrofit;
+public class ApiClient {
+    private static volatile Retrofit retrofit;
 
-    private ApiClient() {}
-
-    public static Retrofit get(Context context) {
+    public static Retrofit get(Context ctx) {
         if (retrofit == null) {
-            OkHttpClient.Builder ok = new OkHttpClient.Builder()
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(20, TimeUnit.SECONDS)
-                    .writeTimeout(20, TimeUnit.SECONDS);
+            synchronized (ApiClient.class) {
+                if (retrofit == null) {
+                    TokenStore store = new TokenStore(ctx.getApplicationContext());
+                    Interceptor auth = chain -> {
+                        Request o = chain.request();
+                        Request.Builder b = o.newBuilder().header("Accept", "application/json");
+                        String t = store.getAccessToken();
+                        if (t != null && !t.isEmpty()) b.header("Authorization", "Bearer " + t);
+                        return chain.proceed(b.build());
+                    };
+                    HttpLoggingInterceptor log = new HttpLoggingInterceptor();
+                    log.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-            ok.addInterceptor(logging);
+                    OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
+                            .addInterceptor(auth)
+                            .addInterceptor(log)
+                            .connectTimeout(15, TimeUnit.SECONDS)
+                            .readTimeout(20, TimeUnit.SECONDS)
+                            .writeTimeout(20, TimeUnit.SECONDS);
 
-            // 디버그에서만 목 응답
-            if (BuildConfig.USE_MOCK) {
-                ok.addInterceptor(new MockInterceptor(context));
+                    if (BuildConfig.USE_MOCK) {
+                        clientBuilder.addInterceptor(new MockInterceptor());
+                    }
+
+                    OkHttpClient client = clientBuilder.build();
+
+                    Gson gson = new GsonBuilder().setLenient().create();
+
+                    retrofit = new Retrofit.Builder()
+                            .baseUrl(BuildConfig.BASE_URL)
+                            .client(client)
+                            .addConverterFactory(GsonConverterFactory.create(gson))
+                            .build();
+                }
             }
-
-            retrofit = new Retrofit.Builder()
-                    .baseUrl(BuildConfig.BASE_URL)   // Gradle
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .client(ok.build())
-                    .build();
         }
         return retrofit;
+    }
+
+    public static ApiService service(Context ctx) {
+        return get(ctx).create(ApiService.class);
     }
 }

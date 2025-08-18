@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.subforest.ui.AddActivity;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
@@ -22,8 +24,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.example.subforest.adapter.PaymentServiceAdapter;
 import com.example.subforest.adapter.SubscribedServiceAdapter;
-import com.example.subforest.api.ApiClient;
-import com.example.subforest.api.ApiService;
+import com.example.subforest.network.ApiClient;
+import com.example.subforest.network.ApiService;
 import com.example.subforest.model.DashboardSummaryResponse;
 import com.example.subforest.model.PaymentService;
 import com.example.subforest.model.SubscribedService;
@@ -110,7 +112,7 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.get(this).create(ApiService.class);
         Call<DashboardSummaryResponse> call = apiService.getDashboardSummary(userId);
 
         call.enqueue(new Callback<DashboardSummaryResponse>() {
@@ -132,7 +134,6 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    // HomeActivity.java
     private void loadUpcomingPayments() {
         long userId = getUserId();
         if (userId == -1) return;
@@ -144,7 +145,7 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<UpcomingSubscriptionResponse> call, Response<UpcomingSubscriptionResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<PaymentService> paymentServices = response.body().getUpcomingPayments();
+                    List<PaymentService> paymentServices = new ArrayList<>();
                     ((PaymentServiceAdapter) paymentRecyclerView.getAdapter()).updateData(paymentServices);
                 } else {
                     Toast.makeText(HomeActivity.this, "결제 예정 서비스 로드 실패", Toast.LENGTH_SHORT).show();
@@ -162,7 +163,7 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.get(this).create(ApiService.class);
         Call<SubscriptionsListResponse> call = apiService.getSubscriptionsList(userId);
 
         call.enqueue(new Callback<SubscriptionsListResponse>() {

@@ -8,8 +8,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.subforest.api.ApiClient;
-import com.example.subforest.api.ApiService;
+import com.example.subforest.network.ApiClient;
+import com.example.subforest.network.ApiService;
 import com.example.subforest.model.RegisterRequest;
 import com.example.subforest.model.RegisterResponse;
 import retrofit2.Call;
@@ -46,7 +46,7 @@ public class RegisterActivity extends AppCompatActivity {
             // RegisterRequest 객체 생성 (API 명세에 맞춤)
             RegisterRequest registerRequest = new RegisterRequest(email, name, password);
 
-            ApiService apiService = ApiClient.getClient().create(ApiService.class);
+            ApiService apiService = ApiClient.get(this).create(ApiService.class);
             Call<RegisterResponse> call = apiService.registerUser(registerRequest);
 
             call.enqueue(new Callback<RegisterResponse>() {
