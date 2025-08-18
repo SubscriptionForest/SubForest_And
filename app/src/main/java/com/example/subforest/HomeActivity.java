@@ -132,18 +132,19 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    // HomeActivity.java
     private void loadUpcomingPayments() {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.get(this).create(ApiService.class);
         Call<UpcomingSubscriptionResponse> call = apiService.getUpcomingSubscriptions(userId);
 
         call.enqueue(new Callback<UpcomingSubscriptionResponse>() {
             @Override
             public void onResponse(Call<UpcomingSubscriptionResponse> call, Response<UpcomingSubscriptionResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<PaymentService> paymentServices = new ArrayList<>();
+                    List<PaymentService> paymentServices = response.body().getUpcomingPayments();
                     ((PaymentServiceAdapter) paymentRecyclerView.getAdapter()).updateData(paymentServices);
                 } else {
                     Toast.makeText(HomeActivity.this, "결제 예정 서비스 로드 실패", Toast.LENGTH_SHORT).show();
