@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:networkSecurityConfig="@xml/network_security_config"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -14,22 +15,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SubForest">
         <activity
-            android:name=".MypageActivity"
+            android:name=".ui.MypageActivity"
             android:exported="false" />
         <activity
-            android:name=".AddActivity"
+            android:name=".ui.AddActivity"
             android:exported="false" />
         <activity
-            android:name=".ListActivity"
+            android:name=".ui.ListActivity"
             android:exported="false" />
         <activity
-            android:name=".HomeActivity"
+            android:name=".ui.HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".RegisterActivity"
+            android:name=".ui.RegisterActivity"
             android:exported="false" />
         <activity
-            android:name=".LoginActivity"
+            android:name=".ui.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
