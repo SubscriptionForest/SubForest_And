@@ -5,14 +5,17 @@ import java.util.List;
 
 public class UpcomingSubscriptionResponse {
     @SerializedName("content")
-    private List<SubscriptionListItemDto> content;
+    private List<PaymentService> upcomingPayments; // PaymentService로 타입 변경
+
     @SerializedName("totalElements")
     private int totalElements;
+
     @SerializedName("totalPages")
     private int totalPages;
 
-    public List<SubscriptionListItemDto> getContent() {
-        return content;
+    // 이 메서드명을 getUpcomingPayments()로 변경
+    public List<PaymentService> getUpcomingPayments() {
+        return upcomingPayments;
     }
 
     public int getTotalElements() {

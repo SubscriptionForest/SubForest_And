@@ -11,7 +11,8 @@ public class SubscriptionsListResponse {
     @SerializedName("totalPages")
     private int totalPages;
 
-    public List<SubscriptionListItemDto> getContent() {
+    // 이 메서드명을 getSubscriptions()로 변경
+    public List<SubscriptionListItemDto> getSubscriptions() {
         return content;
     }
 
