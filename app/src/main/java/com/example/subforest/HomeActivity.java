@@ -31,12 +31,14 @@ import com.example.subforest.model.PaymentService;
 import com.example.subforest.model.SubscribedService;
 import com.example.subforest.model.UpcomingSubscriptionResponse;
 import com.example.subforest.model.SubscriptionsListResponse;
+import com.example.subforest.model.SubscriptionListItemDto;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -145,7 +147,7 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<UpcomingSubscriptionResponse> call, Response<UpcomingSubscriptionResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<PaymentService> paymentServices = new ArrayList<>();
+                    List<PaymentService> paymentServices = response.body().getUpcomingPayments();
                     ((PaymentServiceAdapter) paymentRecyclerView.getAdapter()).updateData(paymentServices);
                 } else {
                     Toast.makeText(HomeActivity.this, "결제 예정 서비스 로드 실패", Toast.LENGTH_SHORT).show();
@@ -159,6 +161,7 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+
     private void loadSubscribedServices() {
         long userId = getUserId();
         if (userId == -1) return;
@@ -170,7 +173,15 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<SubscriptionsListResponse> call, Response<SubscriptionsListResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+
+                    List<SubscriptionListItemDto> dtoList = response.body().getSubscriptions();
                     List<SubscribedService> subscribedServices = new ArrayList<>();
+
+                    for (SubscriptionListItemDto dto : dtoList) {
+                        // SubscriptionListItemDto의 데이터를 사용하여 SubscribedService 객체 생성
+                        subscribedServices.add(new SubscribedService(dto.getServiceName(), dto.getLogoUrl()));
+                    }
+
                     ((SubscribedServiceAdapter) subscribedServicesRecyclerView.getAdapter()).updateData(subscribedServices);
                 } else {
                     Toast.makeText(HomeActivity.this, "구독 중인 서비스 로드 실패", Toast.LENGTH_SHORT).show();
