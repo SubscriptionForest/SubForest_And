@@ -33,11 +33,11 @@ public class EditSubActivity extends AppCompatActivity {
     private long id;
     @Nullable private Long selectedServiceId = null;
     @Nullable private Long selectedCustomServiceId = null;
-    @Nullable private Uri selectedImageUri = null; // (옵션) 커스텀 서비스 변경 시 사용
+    @Nullable private Uri selectedImageUri = null;
 
     private final List<ApiRepository.ServiceItem> serviceItems = new ArrayList<>();
     private final List<String> serviceNames = new ArrayList<>();
-    private AddActivity.ServiceAdapter autoAdapter; // 재사용
+    private AddActivity.ServiceAdapter autoAdapter;
 
     @Nullable private ImageView dialogPreviewRef = null;
 
@@ -70,10 +70,7 @@ public class EditSubActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> save());
         backButton.setOnClickListener(v -> finish());
 
-        // Intent 값 바인딩
         readIntentAndBind();
-
-        // 서비스 목록 로드(자동완성)
         loadServices();
     }
 
@@ -160,7 +157,6 @@ public class EditSubActivity extends AppCompatActivity {
         amountEdit.setText(String.valueOf(amount));
         if (startDate != null) dateEdit.setText(startDate);
 
-        // 스피너 선택 보정
         int sel = 0;
         for (int i = 0; i < SPINNER_DAYS.length; i++) if (SPINNER_DAYS[i] == repeatDays) { sel = i; break; }
         repeatSpinner.setSelection(sel);
@@ -293,7 +289,6 @@ public class EditSubActivity extends AppCompatActivity {
         int pos = Math.max(0, repeatSpinner.getSelectedItemPosition());
         int repeatDays = SPINNER_DAYS[pos];
 
-        // 이름만 타이핑한 경우(선택 이벤트 없이) 보정
         if (selectedServiceId == null && selectedCustomServiceId == null) {
             Long maybe = findServiceIdByName(name);
             if (maybe != null) selectedServiceId = maybe;

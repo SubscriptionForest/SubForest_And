@@ -33,17 +33,14 @@ public class AddActivity extends AppCompatActivity {
     private Button saveButton;
     private ImageButton backButton;
 
-    // 로컬 상태
-    @Nullable private Long selectedServiceId = null;       // 공통 서비스 ID
-    @Nullable private Long selectedCustomServiceId = null; // 사용자 서비스 ID
-    @Nullable private Uri selectedImageUri = null;         // 커스텀 서비스 로고(옵션)
+    @Nullable private Long selectedServiceId = null;
+    @Nullable private Long selectedCustomServiceId = null;
+    @Nullable private Uri selectedImageUri = null;
 
-    // 자동완성 데이터
     private final List<ApiRepository.ServiceItem> serviceItems = new ArrayList<>();
     private final List<String> serviceNames = new ArrayList<>();
     private ServiceAdapter autoAdapter;
 
-    // Dialog 내 프리뷰를 업데이트하기 위한 임시 참조
     @Nullable private ImageView dialogPreviewRef = null;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -75,7 +72,6 @@ public class AddActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> save());
         backButton.setOnClickListener(v -> finish());
 
-        // 서버에서 서비스 목록 로드
         loadServices();
     }
 
@@ -131,7 +127,6 @@ public class AddActivity extends AppCompatActivity {
                 serviceNameAuto.setText("");
                 showAddDialog();
             } else {
-                // 기존 서비스 선택됨 → serviceId 세팅, customServiceId/이미지 초기화
                 selectedServiceId = findServiceIdByName(item);
                 selectedCustomServiceId = null;
                 selectedImageUri = null;
@@ -146,7 +141,7 @@ public class AddActivity extends AppCompatActivity {
                 serviceItems.addAll(data);
                 serviceNames.clear();
                 for (ApiRepository.ServiceItem s : data) serviceNames.add(s.name);
-                autoAdapter.refresh(); // 드롭다운 업데이트
+                autoAdapter.refresh();
             }
             @Override public void onError(String message) {
                 Toast.makeText(AddActivity.this, "서비스 목록 실패: " + message, Toast.LENGTH_SHORT).show();
@@ -220,11 +215,9 @@ public class AddActivity extends AppCompatActivity {
                     Toast.makeText(this, "서비스명을 입력하세요.", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // 서버에 커스텀 서비스 생성
                 ApiRepository.get(this).createCustomService(name, selectedImageUri,
                         new ApiRepository.RepoCallback<ApiRepository.CustomServiceItem>() {
                             @Override public void onSuccess(ApiRepository.CustomServiceItem cs) {
-                                // 자동완성 목록에 추가
                                 if (!serviceNames.contains(cs.name)) {
                                     serviceNames.add(cs.name);
                                     autoAdapter.refresh();
@@ -233,7 +226,7 @@ public class AddActivity extends AppCompatActivity {
                                 serviceNameAuto.dismissDropDown();
 
                                 selectedServiceId = null;
-                                selectedCustomServiceId = cs.id; // 이후 저장 시 사용
+                                selectedCustomServiceId = cs.id;
                                 Toast.makeText(AddActivity.this, "등록되었습니다.", Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();
                             }
@@ -266,17 +259,14 @@ public class AddActivity extends AppCompatActivity {
         int pos = Math.max(0, repeatSpinner.getSelectedItemPosition());
         int repeatDays = SPINNER_DAYS[pos];
 
-        // 서비스 선택 상태 정리
         Long serviceId = selectedServiceId;
         Long customServiceId = selectedCustomServiceId;
 
-        // 자동완성에서 기존 서비스명을 직접 타이핑한 경우(선택 이벤트 없이) 보정
         if (serviceId == null && customServiceId == null) {
             Long maybe = findServiceIdByName(name);
             if (maybe != null) serviceId = maybe;
         }
 
-        // 커스텀 서비스가 필요한데 아직 생성 안 했으면 자동 생성 후 구독 생성
         if (serviceId == null && customServiceId == null) {
             ApiRepository.get(this).createCustomService(name, selectedImageUri,
                     new ApiRepository.RepoCallback<ApiRepository.CustomServiceItem>() {
@@ -290,7 +280,6 @@ public class AddActivity extends AppCompatActivity {
             return;
         }
 
-        // 바로 구독 생성
         createSub(serviceId, customServiceId, amount, date, repeatDays, auto, shared);
     }
 

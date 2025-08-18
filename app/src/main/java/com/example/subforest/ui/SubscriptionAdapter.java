@@ -105,14 +105,18 @@ public class SubscriptionAdapter extends ListAdapter<ApiRepository.SubscriptionI
 
             name.setText(it.name);
             period.setText(DateUtils.periodLabel(it.startDate, it.repeatDays));
-            amount.setText(String.format("%,d원", it.amount));
+            String priceText = String.format("%,d원", it.amount);
+            if (it.shared) {
+                priceText += " (공유)";
+            }
+            amount.setText(priceText);
 
             if (it.autoPayment) {
-                autoDot.setTextColor(Color.parseColor("#4CAF50")); // auto = 초록
-                nextLabel.setText("다음 결제일");
+                autoDot.setTextColor(Color.parseColor("#4CAF50")); // auto=초록
+                nextLabel.setText("다음 결제일 : ");
             } else {
-                autoDot.setTextColor(Color.parseColor("#F44336")); // non-auto = 빨강
-                nextLabel.setText("종료 예정일");
+                autoDot.setTextColor(Color.parseColor("#F44336")); // non-auto=빨강
+                nextLabel.setText("종료 예정일 : ");
             }
 
             String computed = com.example.subforest.ui.DateUtils.addDaysMd(it.startDate, it.repeatDays);
