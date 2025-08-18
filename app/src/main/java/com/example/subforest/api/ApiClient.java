@@ -1,4 +1,4 @@
-package com.example.subforest;
+package com.example.subforest.api;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;

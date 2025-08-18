@@ -67,7 +67,7 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <Button
-                    android:id="@+id/addSubscriptionButton"
+                    android:id="@+id/addSubscriptionBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="46dp"
                     android:layout_marginBottom="16dp"
@@ -110,7 +110,7 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/monthlyCostValue"
+                        android:id="@+id/totalCostText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"

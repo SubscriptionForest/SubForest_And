@@ -1,16 +1,19 @@
+// LoginActivity.java
 package com.example.subforest;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-// 통신을 위한 라이브러리(Retrofit, Volley 등)를 가정하고 작성합니다.
 import com.example.subforest.api.ApiClient;
 import com.example.subforest.api.ApiService;
-import com.example.subforest.model.LoginResponse; // 응답 데이터 모델
+import com.example.subforest.model.LoginRequest;
+import com.example.subforest.model.LoginResponse;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -35,26 +38,31 @@ public class LoginActivity extends AppCompatActivity {
             String email = emailInput.getText().toString();
             String password = passwordInput.getText().toString();
 
-            // 로그인 API 호출
+            // LoginRequest 객체 생성 (API 명세에 맞춤)
+            LoginRequest loginRequest = new LoginRequest(email, password);
+
             ApiService apiService = ApiClient.getClient().create(ApiService.class);
-            Call<LoginResponse> call = apiService.loginUser(email, password);
+            Call<LoginResponse> call = apiService.loginUser(loginRequest);
 
             call.enqueue(new Callback<LoginResponse>() {
                 @Override
                 public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        // 로그인 성공 시
                         LoginResponse loginResponse = response.body();
-                        // 토큰 또는 사용자 ID를 저장
-                        // SharedPreferences 등 사용하여 로그인 상태 유지
+                        // 토큰 및 사용자 정보 SharedPreferences에 저장
+                        SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sp.edit();
+                        editor.putString("jwt_token", loginResponse.getToken());
+                        editor.putString("user_email", loginResponse.getEmail());
+                        editor.putString("user_name", loginResponse.getName());
+                        editor.apply();
 
                         Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                         startActivity(intent);
                         finish();
                     } else {
-                        // 로그인 실패 시
-                        Toast.makeText(LoginActivity.this, "로그인 실패", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "로그인 실패: 이메일 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
                     }
                 }
 

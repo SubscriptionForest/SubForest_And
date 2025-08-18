@@ -64,7 +64,7 @@
                 android:textColor="#020202" />
 
             <EditText
-                android:id="@+id/name_edittext"
+                android:id="@+id/name"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="6dp"
@@ -82,7 +82,7 @@
                 android:textColor="#020202" />
 
             <EditText
-                android:id="@+id/email_edittext"
+                android:id="@+id/email"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="6dp"
@@ -100,7 +100,7 @@
                 android:textColor="#020202" />
 
             <EditText
-                android:id="@+id/password_edittext"
+                android:id="@+id/password"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="6dp"
@@ -117,7 +117,7 @@
                 android:textColor="#020202" />
 
             <EditText
-                android:id="@+id/confirm_password_edittext"
+                android:id="@+id/confirmPassword"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="6dp"
@@ -127,13 +127,13 @@
                 android:inputType="textPassword" />
 
             <Button
-                android:id="@+id/signup_button"
+                android:id="@+id/signupBtn"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
-                android:text="회원가입"
+                android:text="새 계정 만들기"
                 android:textSize="14sp"
-                android:textColor="#020202"
-                android:backgroundTint="#B8DDA1" />
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#8D92A3" />
 
         </LinearLayout>
 
