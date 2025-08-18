@@ -46,7 +46,7 @@ public class RegisterActivity extends AppCompatActivity {
             // RegisterRequest 객체 생성 (API 명세에 맞춤)
             RegisterRequest registerRequest = new RegisterRequest(email, name, password);
 
-            ApiService apiService = ApiClient.get().create(ApiService.class);
+            ApiService apiService = ApiClient.get(this).create(ApiService.class);
             Call<RegisterResponse> call = apiService.registerUser(registerRequest);
 
             call.enqueue(new Callback<RegisterResponse>() {

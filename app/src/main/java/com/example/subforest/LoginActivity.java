@@ -41,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
             // LoginRequest 객체 생성 (API 명세에 맞춤)
             LoginRequest loginRequest = new LoginRequest(email, password);
 
-            ApiService apiService = ApiClient.getClient().create(ApiService.class);
+            ApiService apiService = ApiClient.get(this).create(ApiService.class);
             Call<LoginResponse> call = apiService.loginUser(loginRequest);
 
             call.enqueue(new Callback<LoginResponse>() {

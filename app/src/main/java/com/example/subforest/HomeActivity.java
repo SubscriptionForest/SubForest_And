@@ -112,7 +112,7 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.get(this).create(ApiService.class);
         Call<DashboardSummaryResponse> call = apiService.getDashboardSummary(userId);
 
         call.enqueue(new Callback<DashboardSummaryResponse>() {
@@ -138,7 +138,7 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.get(this).create(ApiService.class);
         Call<UpcomingSubscriptionResponse> call = apiService.getUpcomingSubscriptions(userId);
 
         call.enqueue(new Callback<UpcomingSubscriptionResponse>() {
@@ -163,7 +163,7 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.get(this).create(ApiService.class);
         Call<SubscriptionsListResponse> call = apiService.getSubscriptionsList(userId);
 
         call.enqueue(new Callback<SubscriptionsListResponse>() {

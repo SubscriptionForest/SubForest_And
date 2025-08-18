@@ -1,5 +1,12 @@
 package com.example.subforest.network;
 
+import com.example.subforest.model.DashboardSummaryResponse;
+import com.example.subforest.model.RegisterRequest;
+import com.example.subforest.model.RegisterResponse;
+import com.example.subforest.model.LoginResponse;
+import com.example.subforest.model.LoginRequest;
+import com.example.subforest.model.SubscriptionsListResponse;
+import com.example.subforest.model.UpcomingSubscriptionResponse;
 import com.example.subforest.network.ApiDtos.*;
 import java.util.List;
 import java.util.Map;
@@ -9,12 +16,12 @@ import retrofit2.http.*;
 public interface ApiService {
 
     // -------- Auth --------
-    @POST("auth/signup")  Call<UserProfile> signup(@Body SignupRequest body);
-    @POST("auth/login")   Call<LoginResponse> login(@Body LoginRequest body);
+    @POST("/auth/signup") Call<RegisterResponse> registerUser(@Body RegisterRequest request);
+    @POST("/auth/login") Call<LoginResponse> loginUser(@Body LoginRequest request);
     @POST("auth/logout")  Call<Void> logout();
     @DELETE("auth/withdraw") Call<Void> withdraw();
     @GET("auth/me")       Call<UserProfile> me();
-    @PATCH("auth/me")     Call<UserProfile> patchMe(@Body Map<String, Object> partial);
+    @PUT("auth/me")     Call<UserProfile> patchMe(@Body Map<String, Object> partial);
 
     // -------- Subscriptions --------
     @POST("subscriptions") Call<SubscriptionResponse> createSubscription(@Body SubscriptionRequest body);
@@ -24,15 +31,16 @@ public interface ApiService {
 
     @DELETE("subscriptions/{id}") Call<Void> deleteSubscription(@Path("id") long id);
 
-    @GET("subscriptions") Call<PagedList<SubscriptionListItemDto>> getSubscriptions(@Query("userId") long userId,
+    @GET("subscriptions")
+    Call<PagedList<SubscriptionListItemDto>> getSubscriptions(@Query("userId") long userId,
                                                                                     @Query("page") int page,
                                                                                     @Query("size") int size);
+    Call<SubscriptionsListResponse> getSubscriptionsList(@Query("userId") long userId);
 
     @GET("subscriptions/{id}") Call<SubscriptionResponse> getSubscription(@Path("id") long id);
 
-    @GET("subscriptions/upcoming") Call<PagedList<SubscriptionListItemDto>> getUpcoming(@Query("userId") long userId,
-                                                                                        @Query("page") int page,
-                                                                                        @Query("size") int size);
+    @GET("/subscriptions/upcoming")
+    Call<UpcomingSubscriptionResponse> getUpcomingSubscriptions(@Query("userId") long userId);
 
     // -------- Custom Services --------
     @POST("custom-services") Call<CustomServiceItem> createCustomService(@Body CustomServiceCreate body);
@@ -43,5 +51,5 @@ public interface ApiService {
     @GET("services/search") Call<List<ServiceItem>> searchServices(@Query("q") String q);
 
     // -------- Dashboard --------
-    @GET("dashboard/summary") Call<DashboardSummary> getSummary(@Query("userId") long userId);
+    @GET("dashboard/summary") Call<DashboardSummaryResponse> getDashboardSummary(@Query("userId") long userId);
 }
