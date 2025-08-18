@@ -33,7 +33,7 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         registerBtn = findViewById(R.id.registerBtn);
 
-        // 로그인 버튼 클릭 → 백엔드 통신 후 홈 화면으로 이동
+        // 로그인 버튼 클릭 → 백엔드 통신 후 홈 화면으로 이동한다.
         loginBtn.setOnClickListener(v -> {
             String email = emailInput.getText().toString();
             String password = passwordInput.getText().toString();
