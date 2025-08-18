@@ -5,10 +5,11 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.Nullable;
-
 import com.example.subforest.network.ApiDtos.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
@@ -17,7 +18,7 @@ import retrofit2.Response;
 
 public class ApiRepository {
 
-    // ==== UI에 노출할 모델 (액티비티/어댑터와 시그니처 동일) ====
+    // ===== UI에 노출할 모델 =====
     public static class ServiceItem { public long id; public String name; public String logoUrl; }
     public static class CustomServiceItem { public long id; public String name; public String logoUrl; }
     public static class SubscriptionItem {
@@ -30,25 +31,27 @@ public class ApiRepository {
         public long id; public String email; public String name; public boolean notificationEnabled;
     }
 
-    // ==== 콜백 ====
+    // ===== 콜백 =====
     public interface RepoCallback<T> { void onSuccess(T data); void onError(String message); }
 
-    // ==== 싱글턴 ====
-    private static volatile ApiRepository instance;
+    // ===== 싱글턴 =====
+    private static volatile ApiRepository INSTANCE;
     public static ApiRepository get(Context ctx) {
-        if (instance == null) {
+        if (INSTANCE == null) {
             synchronized (ApiRepository.class) {
-                if (instance == null) instance = new ApiRepository(ctx.getApplicationContext());
+                if (INSTANCE == null) INSTANCE = new ApiRepository(ctx.getApplicationContext());
             }
         }
-        return instance;
+        return INSTANCE;
     }
 
+    private final Context app;
     private final ApiService api;
     private final TokenStore tokenStore;
     private final Handler main = new Handler(Looper.getMainLooper());
 
     private ApiRepository(Context app) {
+        this.app = app;
         this.api = ApiClient.service(app);
         this.tokenStore = new TokenStore(app);
     }
@@ -56,7 +59,7 @@ public class ApiRepository {
     private long uid() { return tokenStore.getUserIdOr(1L); }
     private void postErr(RepoCallback<?> cb, String msg) { main.post(() -> cb.onError(msg)); }
 
-    // ---------- Services 검색 + 커스텀 병합 ----------
+    // ===== 서비스 검색 + 커스텀 병합 =====
     public void getServices(@Nullable String query, RepoCallback<List<ServiceItem>> cb) {
         api.searchServices(query == null ? "" : query).enqueue(new Callback<List<ApiDtos.ServiceItem>>() {
             @Override public void onResponse(Call<List<ApiDtos.ServiceItem>> call, Response<List<ApiDtos.ServiceItem>> resp) {
@@ -79,7 +82,7 @@ public class ApiRepository {
                         main.post(() -> cb.onSuccess(merged));
                     }
                     @Override public void onFailure(Call<List<ApiDtos.CustomServiceItem>> call2, Throwable t) {
-                        main.post(() -> cb.onSuccess(merged)); // 커스텀은 실패해도 기본 결과 반환
+                        main.post(() -> cb.onSuccess(merged)); // 커스텀 실패해도 기본 반환
                     }
                 });
             }
@@ -87,12 +90,12 @@ public class ApiRepository {
         });
     }
 
-    // ---------- Custom Service 등록 ----------
+    // ===== 커스텀 서비스 등록 (이미지 업로드 없이 문자열/URI 전송 허용) =====
     public void createCustomService(String name, @Nullable Uri imageUri, RepoCallback<CustomServiceItem> cb) {
         CustomServiceCreate body = new CustomServiceCreate();
         body.userId = uid();
         body.name = name;
-        body.logoUrl = null; // 업로드 미정
+        body.logoUrl = imageUri != null ? imageUri.toString() : null;
 
         api.createCustomService(body).enqueue(new Callback<ApiDtos.CustomServiceItem>() {
             @Override public void onResponse(Call<ApiDtos.CustomServiceItem> call, Response<ApiDtos.CustomServiceItem> resp) {
@@ -106,7 +109,7 @@ public class ApiRepository {
         });
     }
 
-    // ---------- Subscription 생성/수정/삭제 ----------
+    // ===== 구독 생성/수정/삭제 =====
     public void createSubscription(@Nullable Long serviceId, @Nullable Long customServiceId,
                                    int amount, String startYmd, int repeatDays,
                                    boolean auto, boolean shared,
@@ -151,22 +154,23 @@ public class ApiRepository {
         });
     }
 
-    // 목록 조회 후 상세(필수 필드만) 병렬 보강
+    /** 목록 → 상세 보강해서 UI모델 구성 */
     public void getSubscriptions(RepoCallback<List<SubscriptionItem>> cb) {
         api.getSubscriptions(uid(), 0, 100).enqueue(new Callback<PagedList<SubscriptionListItemDto>>() {
             @Override public void onResponse(Call<PagedList<SubscriptionListItemDto>> call, Response<PagedList<SubscriptionListItemDto>> r) {
                 if (!r.isSuccessful() || r.body()==null || r.body().content==null) { postErr(cb, "목록 실패(" + r.code() + ")"); return; }
-                List<SubscriptionListItemDto> list = r.body().content;
-                if (list.isEmpty()) { main.post(() -> cb.onSuccess(new ArrayList<>())); return; }
+                List<SubscriptionListItemDto> base = r.body().content;
+                if (base.isEmpty()) { main.post(() -> cb.onSuccess(new ArrayList<>())); return; }
 
                 List<SubscriptionItem> out = Collections.synchronizedList(new ArrayList<>());
-                AtomicInteger left = new AtomicInteger(list.size());
-                for (SubscriptionListItemDto lite : list) {
+                AtomicInteger left = new AtomicInteger(base.size());
+
+                for (SubscriptionListItemDto lite : base) {
                     api.getSubscription(lite.id).enqueue(new Callback<SubscriptionResponse>() {
                         @Override public void onResponse(Call<SubscriptionResponse> call2, Response<SubscriptionResponse> d) {
                             if (d.isSuccessful() && d.body()!=null) {
                                 SubscriptionItem m = map(d.body());
-                                if (m.amount == 0) m.amount = lite.amount;
+                                if (m.amount == 0 && lite.amount != null) m.amount = lite.amount;
                                 if (m.logoUrl == null) m.logoUrl = lite.logoUrl;
                                 out.add(m);
                             }
@@ -195,17 +199,15 @@ public class ApiRepository {
         return s;
     }
 
-    // ---------- MyPage ----------
+    // ===== 마이페이지 =====
     public void getMe(RepoCallback<UserProfile> cb) {
-        api.me().enqueue(new Callback<ApiDtos.UserProfile>() {
+        api.getMe().enqueue(new Callback<ApiDtos.UserProfile>() {
             @Override public void onResponse(Call<ApiDtos.UserProfile> call, Response<ApiDtos.UserProfile> resp) {
                 if (resp.isSuccessful() && resp.body()!=null) {
                     tokenStore.saveUserId(resp.body().id);
                     UserProfile u = new UserProfile();
-                    u.id = resp.body().id;
-                    u.email = resp.body().email;
-                    u.name = resp.body().name;
-                    u.notificationEnabled = Boolean.TRUE.equals(resp.body().notificationEnabled);
+                    u.id = resp.body().id; u.email = resp.body().email; u.name = resp.body().name;
+                    u.notificationEnabled = resp.body().notificationEnabled;
                     main.post(() -> cb.onSuccess(u));
                 } else postErr(cb, "내 정보 실패(" + resp.code() + ")");
             }
@@ -214,41 +216,33 @@ public class ApiRepository {
     }
 
     public void updateNotification(boolean enabled, RepoCallback<UserProfile> cb) {
-        Map<String,Object> patch = new HashMap<>();
-        patch.put("notificationEnabled", enabled);
-        api.patchMe(patch).enqueue(new Callback<ApiDtos.UserProfile>() {
-            @Override public void onResponse(Call<ApiDtos.UserProfile> call, Response<ApiDtos.UserProfile> resp) {
-                if (resp.isSuccessful() && resp.body()!=null) {
-                    UserProfile u = new UserProfile();
-                    u.id = resp.body().id; u.email = resp.body().email; u.name = resp.body().name;
-                    u.notificationEnabled = Boolean.TRUE.equals(resp.body().notificationEnabled);
-                    main.post(() -> cb.onSuccess(u));
-                } else postErr(cb, "알림 설정 실패(" + resp.code() + ")");
+        api.updateNotification(new NotificationToggleReq(enabled)).enqueue(new Callback<NotificationToggleRes>() {
+            @Override public void onResponse(Call<NotificationToggleRes> call, Response<NotificationToggleRes> resp) {
+                if (!resp.isSuccessful()) { postErr(cb, "알림 설정 실패(" + resp.code() + ")"); return; }
+                // 전체 프로필을 다시 불러 동일 시그니처 반환
+                getMe(cb);
             }
-            @Override public void onFailure(Call<ApiDtos.UserProfile> call, Throwable t) { postErr(cb, t.getMessage()); }
+            @Override public void onFailure(Call<NotificationToggleRes> call, Throwable t) { postErr(cb, t.getMessage()); }
         });
     }
 
     public void changePassword(String current, String newPw, RepoCallback<Boolean> cb) {
-        Map<String,Object> patch = new HashMap<>();
-        patch.put("currentPassword", current);
-        patch.put("newPassword", newPw);
-        api.patchMe(patch).enqueue(new Callback<ApiDtos.UserProfile>() {
-            @Override public void onResponse(Call<ApiDtos.UserProfile> call, Response<ApiDtos.UserProfile> resp) {
+        api.changePassword(new ApiDtos.ChangePasswordReq(current, newPw)).enqueue(new Callback<MessageResponse>() {
+            @Override public void onResponse(Call<MessageResponse> call, Response<MessageResponse> resp) {
                 if (resp.isSuccessful()) main.post(() -> cb.onSuccess(true));
-                else postErr(cb, "비밀번호 변경 실패(" + resp.code() + ")");
+                else postErr(cb, "비번 변경 실패(" + resp.code() + ")");
             }
-            @Override public void onFailure(Call<ApiDtos.UserProfile> call, Throwable t) { postErr(cb, t.getMessage()); }
+            @Override public void onFailure(Call<MessageResponse> call, Throwable t) { postErr(cb, t.getMessage()); }
         });
     }
 
     public void deleteAccount(RepoCallback<Boolean> cb) {
-        api.withdraw().enqueue(new Callback<Void>() {
-            @Override public void onResponse(Call<Void> call, Response<Void> resp) {
+        api.deactivate().enqueue(new Callback<MessageResponse>() {
+            @Override public void onResponse(Call<MessageResponse> call, Response<MessageResponse> resp) {
                 if (resp.isSuccessful()) main.post(() -> cb.onSuccess(true));
-                else postErr(cb, "탈퇴 실패(" + resp.code() + ")");
+                else postErr(cb, "비활성화 실패(" + resp.code() + ")");
             }
-            @Override public void onFailure(Call<Void> call, Throwable t) { postErr(cb, t.getMessage()); }
+            @Override public void onFailure(Call<MessageResponse> call, Throwable t) { postErr(cb, t.getMessage()); }
         });
     }
 }

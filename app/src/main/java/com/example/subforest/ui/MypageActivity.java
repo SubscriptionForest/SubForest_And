@@ -3,7 +3,6 @@ package com.example.subforest.ui;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -14,7 +13,13 @@ import android.text.style.AbsoluteSizeSpan;
 import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -31,8 +36,10 @@ public class MypageActivity extends AppCompatActivity {
     private static final String PREF_NAME = "UserSettings";
     private static final String PREF_NOTIFICATION = "notification_enabled";
 
-    private TextView tvNickname, tvEmail, tvStatus;
+    private TextView tvNickname;
+    private TextView tvEmail;
     private Switch switchNotification;
+    private TextView tvStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,24 +53,31 @@ public class MypageActivity extends AppCompatActivity {
         switchNotification = findViewById(R.id.switchNotification);
         tvStatus = findViewById(R.id.tvNotificationStatus);
 
-        // 서버에서 내 정보 로드
         loadMe();
 
         findViewById(R.id.btnChangePassword).setOnClickListener(v -> showPasswordDialog());
         findViewById(R.id.btnTerms).setOnClickListener(v -> showSimpleDialog());
-        findViewById(R.id.btnDeactivate).setOnClickListener(v -> showConfirmDialog("계정을 탈퇴 하시겠습니까?", true));
+        findViewById(R.id.btnDeactivate).setOnClickListener(v -> showConfirmDialog("계정을 비활성화 하시겠습니까?", true));
         findViewById(R.id.btnLogout).setOnClickListener(v -> showConfirmDialog("로그아웃 하시겠습니까?", false));
 
+        // 알림 스위치 초기화 (로컬 기본값)
         boolean isEnabledLocal = preferences.getBoolean(PREF_NOTIFICATION, true);
         switchNotification.setChecked(isEnabledLocal);
         renderNotifyStatus(isEnabledLocal);
 
+        // 알림 스위치 변경 -> 서버 반영
         switchNotification.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // 로컬 즉시 반영
             preferences.edit().putBoolean(PREF_NOTIFICATION, isChecked).apply();
             renderNotifyStatus(isChecked);
+            // 서버 반영 (성공/실패는 토스트만)
             ApiRepository.get(this).updateNotification(isChecked, new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
-                @Override public void onSuccess(ApiRepository.UserProfile up) {}
-                @Override public void onError(String msg) { Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show(); }
+                @Override public void onSuccess(ApiRepository.UserProfile up) {
+                    // 성공 시 추가 처리 없음 (화면 그대로)
+                }
+                @Override public void onError(String msg) {
+                    Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
+                }
             });
         });
 
@@ -92,6 +106,7 @@ public class MypageActivity extends AppCompatActivity {
                 if (me != null) {
                     tvNickname.setText(me.name != null ? me.name : "");
                     tvEmail.setText(me.email != null ? me.email : "");
+                    // 서버 상태가 로컬과 다르면 맞춰줌
                     if (me.notificationEnabled != switchNotification.isChecked()) {
                         switchNotification.setChecked(me.notificationEnabled);
                         preferences.edit().putBoolean(PREF_NOTIFICATION, me.notificationEnabled).apply();
@@ -108,6 +123,9 @@ public class MypageActivity extends AppCompatActivity {
     private void renderNotifyStatus(boolean enabled) {
         tvStatus.setText(enabled ? "on" : "off");
         tvStatus.setTextColor(Color.parseColor(enabled ? "#B8DDA1" : "#9E9E9E"));
+        if (switchNotification.getThumbDrawable() != null) {
+            switchNotification.getThumbDrawable().setTint(Color.parseColor(enabled ? "#B8DDA1" : "#9E9E9E"));
+        }
     }
 
     private void showPasswordDialog() {
@@ -115,22 +133,12 @@ public class MypageActivity extends AppCompatActivity {
         LinearLayout layout = createBaseLayout();
 
         TextView title = createTitle("비밀번호 변경");
-        EditText etCurrent = createInput("현재 비밀번호");
-        EditText etNew = createInput("새 비밀번호");
-        EditText etConfirm = createInput("새 비밀번호 확인");
-
-        etCurrent.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         etNew.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        etConfirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        EditText etCurrent = createInput("현재 비밀번호", true);
+        EditText etConfirm = createInput("새 비밀번호 확인", true);
 
         Button btn = new Button(this);
         btn.setText("변경");
-        btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        p.setMargins(100, 70, 100, 0);
-        btn.setLayoutParams(p);
         btn.setOnClickListener(v -> {
             String current = text(etCurrent);
             String newPw = text(etNew);
@@ -179,13 +187,7 @@ public class MypageActivity extends AppCompatActivity {
 
         Button btn = new Button(this);
         btn.setText("확인");
-        btn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
         btn.setOnClickListener(v -> dialog.dismiss());
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        p.setMargins(90, 40, 90, 10);
-        btn.setLayoutParams(p);
 
         layout.addView(title);
         layout.addView(message);
@@ -203,7 +205,6 @@ public class MypageActivity extends AppCompatActivity {
         LinearLayout btnLayout = new LinearLayout(this);
         btnLayout.setOrientation(LinearLayout.HORIZONTAL);
         btnLayout.setGravity(Gravity.CENTER);
-        btnLayout.setPadding(0, 40, 0, 0);
         LinearLayout.LayoutParams btnParams =
                 new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         btnParams.setMargins(15, 0, 15, 0);
@@ -216,12 +217,12 @@ public class MypageActivity extends AppCompatActivity {
                 ApiRepository.get(this).deleteAccount(new ApiRepository.RepoCallback<Boolean>() {
                     @Override public void onSuccess(Boolean ok) {
                         new TokenStore(getApplicationContext()).clear();
-                        Toast.makeText(MypageActivity.this, "계정이 탈퇴되었습니다.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MypageActivity.this, "계정이 비활성화되었습니다.", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                         goLoginClearTask();
                     }
                     @Override public void onError(String msg) {
-                        Toast.makeText(MypageActivity.this, "탈퇴 실패: " + msg, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MypageActivity.this, "비활성화 실패: " + msg, Toast.LENGTH_SHORT).show();
                     }
                 });
             } else {
@@ -234,7 +235,6 @@ public class MypageActivity extends AppCompatActivity {
 
         Button no = new Button(this);
         no.setText("아니요");
-        no.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
         no.setLayoutParams(btnParams);
         no.setOnClickListener(v -> dialog.dismiss());
 
@@ -255,6 +255,7 @@ public class MypageActivity extends AppCompatActivity {
         finish();
     }
 
+    // ====== 공통 UI 헬퍼 ======
     private Dialog createDialog() {
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -288,12 +289,13 @@ public class MypageActivity extends AppCompatActivity {
         return title;
     }
 
-    private EditText createInput(String hint) {
+    private EditText createInput(String hint, boolean password) {
         EditText input = new EditText(this);
         SpannableString hintStr = new SpannableString(hint);
         hintStr.setSpan(new AbsoluteSizeSpan(15, true), 0, hint.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         input.setHint(hintStr);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setInputType(password ? (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)
+                : InputType.TYPE_CLASS_TEXT);
         input.setPadding(30, 25, 30, 25);
         input.setBackgroundResource(R.drawable.bg_edittext);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(

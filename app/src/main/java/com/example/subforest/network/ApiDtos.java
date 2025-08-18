@@ -1,90 +1,96 @@
 package com.example.subforest.network;
 
-import com.google.gson.annotations.SerializedName;
 import java.util.List;
-import java.util.Map;
 
-public class ApiDtos {
+public final class ApiDtos {
+    private ApiDtos() {}
 
-    // ---------- Auth ----------
-    public static class SignupRequest { public String email, name, password; }
-
-    public static class LoginRequest {
-        public String email, password;
-        public LoginRequest() {}
-        public LoginRequest(String email, String password) { this.email=email; this.password=password; }
+    // ===== 공통 페이지 응답 =====
+    public static class PagedList<T> {
+        public List<T> content;
+        public int totalElements;
+        public int totalPages;
     }
 
-    // { "token": "jwt", "email": "...", "name": "..." , (선택) id }
-    public static class LoginResponse { public String token, email, name; public Long id; }
-
-    public static class UserProfile {
-        public long id;
-        public String email, name;
-        public Boolean notificationEnabled; // null-safe 처리 필요
-    }
-
-    // ---------- Services / Custom ----------
+    // ===== 서비스/커스텀 서비스 =====
     public static class ServiceItem {
         public long id;
         public String name;
         public String logoUrl;
     }
 
-    public static class CustomServiceCreate {
-        public Long userId;
-        public String name;
-        public String logoUrl; // 파일업로드 미정 → null 허용
-    }
-
     public static class CustomServiceItem {
         public long id;
-        public long userId;
+        public Long userId;
         public String name;
         public String logoUrl;
     }
 
-    // ---------- Subscriptions ----------
+    public static class CustomServiceCreate {
+        public long userId;
+        public String name;
+        public String logoUrl; // 파일 업로드 없을 땐 null
+    }
+
+    // ===== 구독 =====
     public static class SubscriptionRequest {
         public Long userId;
         public Long serviceId;       // nullable
         public Long customServiceId; // nullable
-        public int amount;
-        public String startDate;     // yyyy-MM-dd
-        @SerializedName("repeatCycleDays") public int repeatCycleDays;
-        public boolean autoPayment;
-        @SerializedName("isShared")  public boolean isShared;
+        public Integer amount;
+        public String startDate;       // yyyy-MM-dd
+        public Integer repeatCycleDays;
+        public Boolean autoPayment;
+        public Boolean isShared;
     }
 
     public static class SubscriptionResponse {
         public long id;
-        @SerializedName("serviceName") public String serviceName;
+        public String serviceName;
         public Integer amount;
-        public String startDate;
-        @SerializedName("repeatCycleDays") public Integer repeatCycleDays;
+        public String startDate;       // yyyy-MM-dd
+        public Integer repeatCycleDays;
         public Boolean autoPayment;
-        @SerializedName("isShared") public Boolean isShared;
-        public String logoUrl; // 선택
+        public Boolean isShared;
+        public String logoUrl;         // 서버가 내려주면 사용
+        public String nextPaymentDate; // 서버가 내려주면 사용
     }
 
     public static class SubscriptionListItemDto {
         public long id;
-        @SerializedName("serviceName") public String serviceName;
-        public int amount;
-        public String nextPaymentDate; // yyyy-MM-dd
-        public String logoUrl;
+        public String serviceName;
+        public Integer amount;
+        public String nextPaymentDate;
+        public String logoUrl; // 있으면 사용, 없으면 상세에서 보강
     }
 
-    public static class PagedList<T> {
-        public List<T> content;
-        public int totalPages;
-        public long totalElements;
+    // ===== 마이페이지 =====
+    public static class UserProfile {
+        public long id;
+        public String email;
+        public String name;
+        public boolean notificationEnabled;
+        public String status;
     }
 
-    // ---------- Dashboard ----------
-    public static class DashboardSummary {
-        public int totalAmount;
-        public int subscriptionCount;
-        public Map<String,Integer> chartData;
+    public static class MessageResponse {
+        public String message;
+    }
+
+    public static class ChangePasswordReq {
+        public String oldPassword;
+        public String newPassword;
+        public ChangePasswordReq(String oldPassword, String newPassword) {
+            this.oldPassword = oldPassword;
+            this.newPassword = newPassword;
+        }
+    }
+
+    public static class NotificationToggleReq {
+        public boolean notificationEnabled;
+        public NotificationToggleReq(boolean enabled) { this.notificationEnabled = enabled; }
+    }
+    public static class NotificationToggleRes {
+        public boolean notificationEnabled;
     }
 }
