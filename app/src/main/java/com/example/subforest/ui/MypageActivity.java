@@ -133,8 +133,8 @@ public class MypageActivity extends AppCompatActivity {
         LinearLayout layout = createBaseLayout();
 
         TextView title = createTitle("비밀번호 변경");
-        etNew.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText etCurrent = createInput("현재 비밀번호", true);
+        EditText etNew = createInput("새 비밀번호", true);
         EditText etConfirm = createInput("새 비밀번호 확인", true);
 
         Button btn = new Button(this);
