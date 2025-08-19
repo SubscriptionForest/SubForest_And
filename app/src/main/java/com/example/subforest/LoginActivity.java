@@ -65,24 +65,33 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                     String token = task.getResult();
                                     Log.d("FCM", "토큰: " + token);
-
                                     ApiRepository.get(getApplicationContext())
                                             .registerFcmToken(token, new ApiRepository.RepoCallback<Boolean>() {
                                                 @Override public void onSuccess(Boolean ok) {}
                                                 @Override public void onError(String message) { Toast.makeText(LoginActivity.this, "FCM 등록 실패", Toast.LENGTH_SHORT).show(); }
                                             });
                                 });
-                        // 토큰 및 사용자 정보 SharedPreferences에 저장
-                        SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sp.edit();
-                        editor.putString("jwt_token", loginResponse.getToken());
-                        editor.putString("user_email", loginResponse.getEmail());
-                        editor.putString("user_name", loginResponse.getName());
-                        editor.apply();
 
-                        Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                        startActivity(intent);
+                        ApiRepository.get(getApplicationContext())
+                                .getMe(new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
+                                    @Override public void onSuccess(ApiRepository.UserProfile me) {
+                                        // 토큰 및 사용자 정보 SharedPreferences에 저장
+                                        SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
+                                        SharedPreferences.Editor editor = sp.edit();
+                                        editor.putString("jwt_token", loginResponse.getToken());
+                                        editor.putString("user_email", loginResponse.getEmail());
+                                        editor.putString("user_name", loginResponse.getName());
+                                        editor.apply();
+
+                                        Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                                    }
+                                    @Override public void onError(String msg) {
+                                        // 유저 동기화 실패해도 일단 진입
+                                        Toast.makeText(LoginActivity.this, "내 정보 동기화 실패: " + msg, Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                                    }
+                                });
                     } else {
                         Toast.makeText(LoginActivity.this, "로그인 실패: 이메일 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
                     }
