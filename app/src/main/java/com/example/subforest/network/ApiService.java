@@ -22,9 +22,8 @@ public interface ApiService {
     @POST("subscriptions") Call<SubscriptionResponse> createSubscription(@Body SubscriptionRequest body);
     @PUT("subscriptions/{id}") Call<SubscriptionResponse> updateSubscription(@Path("id") long id, @Body SubscriptionRequest body);
     @DELETE("subscriptions/{id}") Call<Void> deleteSubscription(@Path("id") long id);
-    @GET("subscriptions")
-    Call<PagedList<SubscriptionListItemDto>> getSubscriptions(@Query("userId") long userId, @Query("page") int page, @Query("size") int size);
-    Call<SubscriptionsListResponse> getSubscriptionsList(@Query("userId") long userId);
+    @GET("subscriptions") Call<PagedList<SubscriptionListItemDto>> getSubscriptions(@Query("userId") long userId, @Query("page") int page, @Query("size") int size);
+    @GET("subscriptions") Call<SubscriptionsListResponse> getSubscriptionsList(@Query("userId") long userId);
     @GET("subscriptions/{id}") Call<SubscriptionResponse> getSubscription(@Path("id") long id);
     @GET("/subscriptions/upcoming") Call<UpcomingSubscriptionResponse> getUpcomingSubscriptions(@Query("userId") long userId);
 

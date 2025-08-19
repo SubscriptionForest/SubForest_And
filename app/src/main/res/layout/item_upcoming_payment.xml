@@ -15,7 +15,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="5dp"
         android:layout_marginTop="5dp"
-        android:contentDescription="@string/service_logo"
+        android:contentDescription="service_logo"
         tools:src="@drawable/logo_youtube" />
 
     <LinearLayout
@@ -71,7 +71,7 @@
             android:id="@+id/remaining_days_icon"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:contentDescription="@string/remaining_days_icon"
+            android:contentDescription="remaining_days_icon"
             tools:src="@drawable/ic_warning_red" />
 
         <TextView
