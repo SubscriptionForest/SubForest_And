@@ -32,11 +32,10 @@
             android:layout_gravity="end"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="0dp"
+            android:layout_marginEnd="8dp"
             android:spinnerMode="dropdown"
             android:background="@drawable/bg_spinner_compact"
-            android:backgroundTint="@null"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"/>
+            android:backgroundTint="@null"/>
     </LinearLayout>
 
     <!-- 리스트 -->

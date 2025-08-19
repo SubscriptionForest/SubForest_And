@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:elevation="4dp"
-    android:backgroundTint="#FFFFFF"
-    android:foreground="?attr/selectableItemBackground">
+    android:layout_marginTop="1dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardElevation="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardUseCompatPadding="true"
+    app:cardPreventCornerOverlap="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp"
-        android:background="@drawable/item_border">
+        android:background="@drawable/item_border"
+        android:clipToOutline="true">
 
         <!-- 서비스명 + 아이콘 -->
         <LinearLayout
@@ -121,7 +128,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="● "
-                android:textSize="18sp"
+                android:textSize="14sp"
                 android:textColor="@color/green" />
 
             <!-- 결제/종료 문구 -->

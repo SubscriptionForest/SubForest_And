@@ -27,7 +27,7 @@ public class ListActivity extends AppCompatActivity {
     private Spinner sortSpinner;
 
     private final List<ApiRepository.SubscriptionItem> current = new ArrayList<>();
-    private static final String[] SORTS = {"결제일 순", "이름 순", "금액 순"};
+    private static final String[] SORTS = {"날짜 순", "이름 순", "금액 순"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -6,12 +6,16 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.text.LineBreaker;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.Layout;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.Gravity;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -73,7 +77,7 @@ public class MypageActivity extends AppCompatActivity {
             // 서버 반영
             ApiRepository.get(this).togglePush(isChecked, new ApiRepository.RepoCallback<Boolean>() {
                         @Override public void onSuccess(Boolean ok) {
-                            Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
                         }
                         @Override public void onError(String msg) {
                             Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
@@ -178,7 +182,7 @@ public class MypageActivity extends AppCompatActivity {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        p.setMargins(50, 50, 50, 0);
+        p.setMargins(70, 70, 70, 0);
         btn.setLayoutParams(p);
 
         layout.addView(title);
@@ -189,6 +193,14 @@ public class MypageActivity extends AppCompatActivity {
 
         dialog.setContentView(layout);
         dialog.show();
+
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int width = (int) (screenWidth * 0.7);
+        Window w = dialog.getWindow();
+        if (w != null) {
+            w.setGravity(Gravity.CENTER);
+            w.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private void showSimpleDialog() {
@@ -198,12 +210,17 @@ public class MypageActivity extends AppCompatActivity {
         TextView title = createTitle("서비스 이용 약관");
         TextView message = new TextView(this);
         String termsText = "1. 본 서비스는 이용자의 동의 하에 제공되며, 타인의 권리 침해, 불법적 이용, 시스템 방해 행위는 금지됩니다.\n"
-                + "2. 본 서비스는 사전 공지 후 변경되거나 중단될 수 있으며, 개인정보는 관련 법령에 따라 안전하게 처리됩니다.\n\n"
+                + "2. 본 서비스는 사전 공지 후 변경되거나 중단될 수 있습니다.\n\n"
                 + "서비스 이용 시 본 약관에 동의한 것으로 간주됩니다.";
         message.setText(termsText);
         message.setTextSize(16);
         message.setTextColor(Color.DKGRAY);
-        message.setPadding(0, 40, 0, 60);
+        LinearLayout.LayoutParams msgParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        msgParams.setMargins(0, 40, 0, 50);
+        message.setLayoutParams(msgParams);
 
         Button btn = new Button(this);
         btn.setText("확인");
@@ -212,7 +229,7 @@ public class MypageActivity extends AppCompatActivity {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        p.setMargins(90, 40, 90, 10);
+        p.setMargins(100, 40, 100, 10);
         btn.setLayoutParams(p);
 
         layout.addView(title);
@@ -221,6 +238,14 @@ public class MypageActivity extends AppCompatActivity {
 
         dialog.setContentView(layout);
         dialog.show();
+
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int width = (int) (screenWidth * 0.75);
+        Window w = dialog.getWindow();
+        if (w != null) {
+            w.setGravity(Gravity.CENTER);
+            w.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private void showConfirmDialog(String message, boolean isDeactivate) {
@@ -292,9 +317,8 @@ public class MypageActivity extends AppCompatActivity {
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
             WindowManager.LayoutParams params = window.getAttributes();
-            params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-            params.y = 150;
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
+            params.gravity = Gravity.CENTER;
+            //params.width = WindowManager.LayoutParams.MATCH_PARENT;
             window.setAttributes(params);
         }
         return dialog;
@@ -303,7 +327,7 @@ public class MypageActivity extends AppCompatActivity {
     private LinearLayout createBaseLayout() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(110, 80, 110, 80);
+        layout.setPadding(100, 80, 100, 80);
         layout.setBackgroundResource(R.drawable.bg_dialog);
         return layout;
     }
@@ -315,6 +339,7 @@ public class MypageActivity extends AppCompatActivity {
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(Color.BLACK);
         title.setPadding(0, 0, 0, 35);
+        title.setGravity(Gravity.CENTER);
         return title;
     }
 
