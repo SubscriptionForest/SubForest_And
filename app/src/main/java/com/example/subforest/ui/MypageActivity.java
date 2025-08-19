@@ -3,6 +3,7 @@ package com.example.subforest.ui;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -160,6 +161,12 @@ public class MypageActivity extends AppCompatActivity {
                 });
             }
         });
+        btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        p.setMargins(50, 50, 50, 0);
+        btn.setLayoutParams(p);
 
         layout.addView(title);
         layout.addView(etCurrent);
@@ -183,11 +190,17 @@ public class MypageActivity extends AppCompatActivity {
         message.setText(termsText);
         message.setTextSize(16);
         message.setTextColor(Color.DKGRAY);
-        message.setPadding(0, 40, 0, 70);
+        message.setPadding(0, 40, 0, 60);
 
         Button btn = new Button(this);
         btn.setText("확인");
         btn.setOnClickListener(v -> dialog.dismiss());
+        btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        p.setMargins(90, 40, 90, 10);
+        btn.setLayoutParams(p);
 
         layout.addView(title);
         layout.addView(message);
@@ -205,6 +218,7 @@ public class MypageActivity extends AppCompatActivity {
         LinearLayout btnLayout = new LinearLayout(this);
         btnLayout.setOrientation(LinearLayout.HORIZONTAL);
         btnLayout.setGravity(Gravity.CENTER);
+        btnLayout.setPadding(0, 40, 0, 0);
         LinearLayout.LayoutParams btnParams =
                 new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         btnParams.setMargins(15, 0, 15, 0);
@@ -235,6 +249,7 @@ public class MypageActivity extends AppCompatActivity {
 
         Button no = new Button(this);
         no.setText("아니요");
+        no.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
         no.setLayoutParams(btnParams);
         no.setOnClickListener(v -> dialog.dismiss());
 

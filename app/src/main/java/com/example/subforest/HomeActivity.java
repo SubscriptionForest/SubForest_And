@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.subforest.ui.AddActivity;
+import com.example.subforest.ui.ListActivity;
+import com.example.subforest.ui.MypageActivity;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
@@ -88,9 +90,13 @@ public class HomeActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_list) {
                 // ListActivity로 이동
+                startActivity(new Intent(this, ListActivity.class));
+                overridePendingTransition(0, 0);
                 return true;
             } else if (id == R.id.nav_profile) {
                 // MypageActivity로 이동
+                startActivity(new Intent(this, MypageActivity.class));
+                overridePendingTransition(0, 0);
                 return true;
             } else if (id == R.id.nav_home) {
                 return true;
