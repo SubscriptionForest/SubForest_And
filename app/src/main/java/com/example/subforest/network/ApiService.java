@@ -9,6 +9,8 @@ import com.example.subforest.model.SubscriptionsListResponse;
 import com.example.subforest.model.UpcomingSubscriptionResponse;
 import com.example.subforest.network.ApiDtos.*;
 import java.util.List;
+import java.util.Map;
+
 import retrofit2.Call;
 import retrofit2.http.*;
 
@@ -43,4 +45,12 @@ public interface ApiService {
     @PATCH("mypage/notification") Call<NotificationToggleRes> updateNotification(@Body NotificationToggleReq body);
     @POST("mypage/deactivate") Call<MessageResponse> deactivate();
     @POST("mypage/logout") Call<MessageResponse> logout();
+
+    // FCM 토큰 등록
+    @POST("api/push/register")
+    Call<Void> registerFcm(@Body Map<String, String> body);
+
+    // 알림 ON/OFF
+    @POST("api/push/toggle")
+    Call<Void> togglePush(@Query("enabled") boolean enabled);
 }

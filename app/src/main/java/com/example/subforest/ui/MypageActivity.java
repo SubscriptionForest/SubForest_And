@@ -66,20 +66,19 @@ public class MypageActivity extends AppCompatActivity {
         switchNotification.setChecked(isEnabledLocal);
         renderNotifyStatus(isEnabledLocal);
 
-        // 알림 스위치 변경 -> 서버 반영
         switchNotification.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // 로컬 즉시 반영
+            // 로컬에 먼저 저장
             preferences.edit().putBoolean(PREF_NOTIFICATION, isChecked).apply();
             renderNotifyStatus(isChecked);
-            // 서버 반영 (성공/실패는 토스트만)
-            ApiRepository.get(this).updateNotification(isChecked, new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
-                @Override public void onSuccess(ApiRepository.UserProfile up) {
-                    // 성공 시 추가 처리 없음 (화면 그대로)
-                }
-                @Override public void onError(String msg) {
-                    Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
-                }
-            });
+            // 서버 반영
+            ApiRepository.get(this).togglePush(isChecked, new ApiRepository.RepoCallback<Boolean>() {
+                        @Override public void onSuccess(Boolean ok) {
+                            Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
+                        }
+                        @Override public void onError(String msg) {
+                            Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
+                        }
+                    });
         });
 
         BottomNavigationView nav = findViewById(R.id.bottomNavigationView);
@@ -101,6 +100,18 @@ public class MypageActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(
+                    this, android.Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        1001
+                );
+            }
+        }
     }
 
     private void loadMe() {

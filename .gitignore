@@ -2,13 +2,22 @@
 .gradle/
 build/
 **/build/
+*.apk
+*.ap_
+*.aab
 
 # Local configuration
 local.properties
 
-# IDE settings
+# IDE
 .idea/
 *.iml
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
 
 # OS-specific
 .DS_Store
@@ -20,17 +29,18 @@ Thumbs.db
 # Android Studio captures
 captures/
 .externalNativeBuild/
+.cxx/
 
 # Keystore files
 *.jks
 *.keystore
 
-# NDK
-.cxx/
-
 # Crashlytics/Firebase
 fabric.properties
 crashlytics-build.properties
+google-services.json
+app/google-services.json
+app/src/*/google-services.json
 
 # Unit test reports
 test-output/

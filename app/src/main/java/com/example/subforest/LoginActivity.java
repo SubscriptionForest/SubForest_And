@@ -5,16 +5,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.subforest.network.ApiClient;
+import com.example.subforest.network.ApiRepository;
 import com.example.subforest.network.ApiService;
 import com.example.subforest.model.LoginRequest;
 import com.example.subforest.model.LoginResponse;
 import com.example.subforest.network.TokenStore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -53,6 +56,22 @@ public class LoginActivity extends AppCompatActivity {
                         LoginResponse loginResponse = response.body();
                         TokenStore ts = new TokenStore(getApplicationContext());
                         ts.saveAccessToken(loginResponse.getToken());
+                        // FCM 토큰 등록
+                        FirebaseMessaging.getInstance().getToken()
+                                .addOnCompleteListener(task -> {
+                                    if (!task.isSuccessful()) {
+                                        Toast.makeText(LoginActivity.this, "FCM 토큰 가져오기 실패", Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+                                    String token = task.getResult();
+                                    Log.d("FCM", "토큰: " + token);
+
+                                    ApiRepository.get(getApplicationContext())
+                                            .registerFcmToken(token, new ApiRepository.RepoCallback<Boolean>() {
+                                                @Override public void onSuccess(Boolean ok) {}
+                                                @Override public void onError(String message) { Toast.makeText(LoginActivity.this, "FCM 등록 실패", Toast.LENGTH_SHORT).show(); }
+                                            });
+                                });
                         // 토큰 및 사용자 정보 SharedPreferences에 저장
                         SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = sp.edit();

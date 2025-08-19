@@ -247,6 +247,19 @@ public class MockInterceptor implements Interceptor {
             return ok(req, gson.toJson(Collections.singletonMap("upcomingPayments", ups)));
         }
 
+        // POST /api/push/register
+        if (is(method, "POST") && eq(path, "/api/push/register")) {
+            // body: {"fcmToken":"..."} → 저장만 흉내
+            return ok(req, "{}"); // 200 본문 없음 대응
+        }
+
+// POST /api/push/toggle?enabled=true|false
+        if (is(method, "POST") && eq(path, "/api/push/toggle")) {
+            Boolean enabled = qpBool(query, "enabled");
+            // me.put("notificationEnabled", enabled); // 원하면 내부 상태 업데이트
+            return ok(req, "{}");
+        }
+
         // 알 수 없는 건 실제 통신
         return chain.proceed(req);
     }

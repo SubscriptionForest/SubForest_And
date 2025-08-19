@@ -10,7 +10,9 @@ import com.example.subforest.ui.ImageUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import retrofit2.Call;
@@ -249,6 +251,28 @@ public class ApiRepository {
                 else postErr(cb, "비활성화 실패(" + resp.code() + ")");
             }
             @Override public void onFailure(Call<MessageResponse> call, Throwable t) { postErr(cb, t.getMessage()); }
+        });
+    }
+
+    public void registerFcmToken(String fcmToken, RepoCallback<Boolean> cb) {
+        Map<String, String> body = new HashMap<>();
+        body.put("fcmToken", fcmToken);
+        api.registerFcm(body).enqueue(new retrofit2.Callback<Void>() {
+            @Override public void onResponse(Call<Void> call, Response<Void> resp) {
+                if (resp.isSuccessful()) main.post(() -> cb.onSuccess(true));
+                else postErr(cb, "FCM 등록 실패(" + resp.code() + ")");
+            }
+            @Override public void onFailure(Call<Void> call, Throwable t) { postErr(cb, t.getMessage()); }
+        });
+    }
+
+    public void togglePush(boolean enabled, RepoCallback<Boolean> cb) {
+        api.togglePush(enabled).enqueue(new retrofit2.Callback<Void>() {
+            @Override public void onResponse(Call<Void> call, Response<Void> resp) {
+                if (resp.isSuccessful()) main.post(() -> cb.onSuccess(true));
+                else postErr(cb, "알림 설정 실패(" + resp.code() + ")");
+            }
+            @Override public void onFailure(Call<Void> call, Throwable t) { postErr(cb, t.getMessage()); }
         });
     }
 }

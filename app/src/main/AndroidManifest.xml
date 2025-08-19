@@ -3,8 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
+        android:name=".App"
         android:networkSecurityConfig="@xml/network_security_config"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -14,6 +16,20 @@
         android:roundIcon="@drawable/ic_subforest"
         android:supportsRtl="true"
         android:theme="@style/Theme.SubForest">
+
+        <!-- FCM 수신 서비스 -->
+        <service
+            android:name=".network.SubForestFirebaseService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+        <!-- 기본 알림 아이콘 -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_subforest"/>
+
         <activity
             android:name=".ui.EditSubActivity"
             android:exported="false" />
