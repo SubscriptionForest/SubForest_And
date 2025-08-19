@@ -89,10 +89,12 @@ public class MypageActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 startActivity(new Intent(this, HomeActivity.class));
                 overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (id == R.id.nav_list) {
                 startActivity(new Intent(this, ListActivity.class));
                 overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (id == R.id.nav_profile) {
                 return true;
@@ -266,6 +268,7 @@ public class MypageActivity extends AppCompatActivity {
     private void goLoginClearTask() {
         Intent i = new Intent(this, LoginActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        new TokenStore(getApplicationContext()).clear();
         startActivity(i);
         finish();
     }

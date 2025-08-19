@@ -87,10 +87,12 @@ public class ListActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 startActivity(new Intent(this, HomeActivity.class));
                 overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (id == R.id.nav_profile) {
                 startActivity(new Intent(this, MypageActivity.class));
                 overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (id == R.id.nav_list) {
                 return true;

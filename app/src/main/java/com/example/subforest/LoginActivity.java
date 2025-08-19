@@ -14,6 +14,8 @@ import com.example.subforest.network.ApiClient;
 import com.example.subforest.network.ApiService;
 import com.example.subforest.model.LoginRequest;
 import com.example.subforest.model.LoginResponse;
+import com.example.subforest.network.TokenStore;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -49,6 +51,8 @@ public class LoginActivity extends AppCompatActivity {
                 public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         LoginResponse loginResponse = response.body();
+                        TokenStore ts = new TokenStore(getApplicationContext());
+                        ts.saveAccessToken(loginResponse.getToken());
                         // 토큰 및 사용자 정보 SharedPreferences에 저장
                         SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = sp.edit();
@@ -60,7 +64,6 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                         startActivity(intent);
-                        finish();
                     } else {
                         Toast.makeText(LoginActivity.this, "로그인 실패: 이메일 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
                     }

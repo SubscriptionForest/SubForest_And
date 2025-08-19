@@ -91,11 +91,13 @@ public class HomeActivity extends AppCompatActivity {
                 // ListActivity로 이동
                 startActivity(new Intent(this, ListActivity.class));
                 overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (id == R.id.nav_profile) {
                 // MypageActivity로 이동
                 startActivity(new Intent(this, MypageActivity.class));
                 overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (id == R.id.nav_home) {
                 return true;
