@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.annotation.Nullable;
 import com.example.subforest.network.ApiDtos.*;
+import com.example.subforest.ui.ImageUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,11 +47,13 @@ public class ApiRepository {
     }
 
     private final Context app;
+    private final Context appContext;
     private final ApiService api;
     private final TokenStore tokenStore;
     private final Handler main = new Handler(Looper.getMainLooper());
 
     private ApiRepository(Context app) {
+        this.appContext = app.getApplicationContext();
         this.app = app;
         this.api = ApiClient.service(app);
         this.tokenStore = new TokenStore(app);
@@ -95,7 +98,10 @@ public class ApiRepository {
         CustomServiceCreate body = new CustomServiceCreate();
         body.userId = uid();
         body.name = name;
-        body.logoUrl = imageUri != null ? imageUri.toString() : null;
+
+        // 내부 저장 후 DB 경로 세팅
+        String dbPath = ImageUtils.saveLogoAndReturnDbUrl(appContext, imageUri, name);
+        body.logoUrl = dbPath; // null 가능(이미지 미선택)
 
         api.createCustomService(body).enqueue(new Callback<ApiDtos.CustomServiceItem>() {
             @Override public void onResponse(Call<ApiDtos.CustomServiceItem> call, Response<ApiDtos.CustomServiceItem> resp) {

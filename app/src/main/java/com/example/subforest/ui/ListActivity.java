@@ -99,6 +99,12 @@ public class ListActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        load();   // 돌아올 때마다 새로고침
+    }
+
     private void load() {
         ApiRepository.get(this).getSubscriptions(
                 new ApiRepository.RepoCallback<List<ApiRepository.SubscriptionItem>>() {
@@ -124,7 +130,7 @@ public class ListActivity extends AppCompatActivity {
                 copy.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
                 break;
             case 2: // 금액 순
-                copy.sort(Comparator.comparingInt((ApiRepository.SubscriptionItem a) -> a.amount).reversed());
+                copy.sort((a, b) -> Integer.compare(b.amount, a.amount));
                 break;
         }
         adapter.submitList(copy);

@@ -10,10 +10,19 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.subforest.adapter.PaymentServiceAdapter;
+import com.example.subforest.adapter.SubscribedServiceAdapter;
+import com.example.subforest.model.DashboardSummaryResponse;
+import com.example.subforest.model.PaymentService;
+import com.example.subforest.model.SubscribedService;
+import com.example.subforest.model.UpcomingSubscriptionResponse;
+import com.example.subforest.network.ApiClient;
+import com.example.subforest.network.ApiService;
+import com.example.subforest.network.ApiDtos.PagedList;
+import com.example.subforest.network.ApiDtos.SubscriptionListItemDto;
 import com.example.subforest.ui.AddActivity;
 import com.example.subforest.ui.ListActivity;
 import com.example.subforest.ui.MypageActivity;
@@ -24,23 +33,13 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import com.example.subforest.adapter.PaymentServiceAdapter;
-import com.example.subforest.adapter.SubscribedServiceAdapter;
-import com.example.subforest.network.ApiClient;
-import com.example.subforest.network.ApiService;
-import com.example.subforest.model.DashboardSummaryResponse;
-import com.example.subforest.model.PaymentService;
-import com.example.subforest.model.SubscribedService;
-import com.example.subforest.model.UpcomingSubscriptionResponse;
-import com.example.subforest.model.SubscriptionsListResponse;
-import com.example.subforest.model.SubscriptionListItemDto;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -120,16 +119,13 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.get(this).create(ApiService.class);
-        Call<DashboardSummaryResponse> call = apiService.getDashboardSummary(userId);
-
-        call.enqueue(new Callback<DashboardSummaryResponse>() {
-            @Override
-            public void onResponse(Call<DashboardSummaryResponse> call, Response<DashboardSummaryResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    DashboardSummaryResponse summary = response.body();
-                    updateMonthlyCost(summary.getTotalAmount());
-                    setupPieChart(summary.getChartData());
+        ApiService api = ApiClient.get(this).create(ApiService.class);
+        api.getDashboardSummary(userId).enqueue(new Callback<DashboardSummaryResponse>() {
+            @Override public void onResponse(Call<DashboardSummaryResponse> call, Response<DashboardSummaryResponse> resp) {
+                if (resp.isSuccessful() && resp.body()!=null) {
+                    DashboardSummaryResponse s = resp.body();
+                    updateMonthlyCost(s.getTotalAmount());
+                    setupPieChart(s.getChartData());
                 } else {
                     Toast.makeText(HomeActivity.this, "대시보드 데이터 로드 실패", Toast.LENGTH_SHORT).show();
                 }
@@ -146,15 +142,13 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.get(this).create(ApiService.class);
-        Call<UpcomingSubscriptionResponse> call = apiService.getUpcomingSubscriptions(userId);
-
-        call.enqueue(new Callback<UpcomingSubscriptionResponse>() {
-            @Override
-            public void onResponse(Call<UpcomingSubscriptionResponse> call, Response<UpcomingSubscriptionResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<PaymentService> paymentServices = response.body().getUpcomingPayments();
-                    ((PaymentServiceAdapter) paymentRecyclerView.getAdapter()).updateData(paymentServices);
+        ApiService api = ApiClient.get(this).create(ApiService.class);
+        api.getUpcomingSubscriptions(userId).enqueue(new Callback<UpcomingSubscriptionResponse>() {
+            @Override public void onResponse(Call<UpcomingSubscriptionResponse> call, Response<UpcomingSubscriptionResponse> resp) {
+                if (resp.isSuccessful() && resp.body()!=null) {
+                    List<PaymentService> list = resp.body().getUpcomingPayments();
+                    PaymentServiceAdapter ad = (PaymentServiceAdapter) paymentRecyclerView.getAdapter();
+                    if (ad != null) ad.updateData(list != null ? list : new ArrayList<>());
                 } else {
                     Toast.makeText(HomeActivity.this, "결제 예정 서비스 로드 실패", Toast.LENGTH_SHORT).show();
                 }
@@ -172,30 +166,24 @@ public class HomeActivity extends AppCompatActivity {
         long userId = getUserId();
         if (userId == -1) return;
 
-        ApiService apiService = ApiClient.get(this).create(ApiService.class);
-        Call<SubscriptionsListResponse> call = apiService.getSubscriptionsList(userId);
-
-        call.enqueue(new Callback<SubscriptionsListResponse>() {
-            @Override
-            public void onResponse(Call<SubscriptionsListResponse> call, Response<SubscriptionsListResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-
-                    List<SubscriptionListItemDto> dtoList = response.body().getSubscriptions();
-                    List<SubscribedService> subscribedServices = new ArrayList<>();
-
+        ApiService api = ApiClient.get(this).create(ApiService.class);
+        api.getSubscriptions(userId, 0, 50).enqueue(new Callback<PagedList<SubscriptionListItemDto>>() {
+            @Override public void onResponse(Call<PagedList<SubscriptionListItemDto>> call,
+                                             Response<PagedList<SubscriptionListItemDto>> resp) {
+                if (resp.isSuccessful() && resp.body()!=null && resp.body().content != null) {
+                    List<SubscriptionListItemDto> dtoList = resp.body().content;
+                    List<SubscribedService> viewList = new ArrayList<>();
                     for (SubscriptionListItemDto dto : dtoList) {
-                        // SubscriptionListItemDto의 데이터를 사용하여 SubscribedService 객체 생성
-                        subscribedServices.add(new SubscribedService(dto.getServiceName(), dto.getLogoUrl()));
+                        // 어댑터가 요구하는 간단 모델로 매핑
+                        viewList.add(new SubscribedService(dto.serviceName, dto.logoUrl));
                     }
-
-                    ((SubscribedServiceAdapter) subscribedServicesRecyclerView.getAdapter()).updateData(subscribedServices);
+                    SubscribedServiceAdapter ad = (SubscribedServiceAdapter) subscribedServicesRecyclerView.getAdapter();
+                    if (ad != null) ad.updateData(viewList);
                 } else {
                     Toast.makeText(HomeActivity.this, "구독 중인 서비스 로드 실패", Toast.LENGTH_SHORT).show();
                 }
             }
-
-            @Override
-            public void onFailure(Call<SubscriptionsListResponse> call, Throwable t) {
+            @Override public void onFailure(Call<PagedList<SubscriptionListItemDto>> call, Throwable t) {
                 Toast.makeText(HomeActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
             }
         });

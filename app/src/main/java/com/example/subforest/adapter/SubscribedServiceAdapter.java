@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.subforest.R;
 import com.example.subforest.model.SubscribedService;
+import com.example.subforest.ui.LogoResolver;
 import java.util.List;
 
 public class SubscribedServiceAdapter extends RecyclerView.Adapter<SubscribedServiceAdapter.ViewHolder> {
@@ -41,9 +42,11 @@ public class SubscribedServiceAdapter extends RecyclerView.Adapter<SubscribedSer
             holder.countText.setVisibility(View.GONE); // 텍스트 숨기기
 
             // Glide를 사용하여 로고 이미지 로드
+            Object model = LogoResolver.toGlideModel(holder.itemView.getContext(), service.getLogoUrl());
             Glide.with(holder.itemView.getContext())
-                    .load(service.getLogoUrl())
+                    .load(model)
                     .placeholder(R.drawable.ic_subforest)
+                    .error(R.drawable.ic_subforest)
                     .into(holder.serviceLogo);
         }
     }

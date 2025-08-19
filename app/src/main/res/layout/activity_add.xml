@@ -26,6 +26,7 @@
             android:contentDescription="뒤로가기" />
 
         <TextView
+            android:id="@+id/upText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="구독 등록"

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.subforest.R;
 import com.example.subforest.model.PaymentService;
+import com.example.subforest.ui.LogoResolver;
 import java.util.List;
 
 public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAdapter.ViewHolder> {
@@ -31,9 +32,11 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
         PaymentService payment = payments.get(position);
 
         // 1. 서비스 로고 이미지 로드 (Glide 사용)
+        Object model = LogoResolver.toGlideModel(holder.itemView.getContext(), payment.getServiceLogoUrl());
         Glide.with(holder.itemView.getContext())
-                .load(payment.getServiceLogoUrl())
+                .load(model)
                 .placeholder(R.drawable.ic_subforest)
+                .error(R.drawable.ic_subforest)
                 .into(holder.serviceLogo);
 
         // 2. 남은 일수 아이콘 동적 설정

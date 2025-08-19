@@ -123,7 +123,12 @@ public class SubscriptionAdapter extends ListAdapter<ApiRepository.SubscriptionI
             nextDateValue.setText(computed);
 
             if (it.logoUrl != null && !it.logoUrl.isEmpty()) {
-                Glide.with(logo.getContext()).load(it.logoUrl).into(logo);
+                Object model = LogoResolver.toGlideModel(logo.getContext(), it.logoUrl);
+                Glide.with(logo.getContext())
+                        .load(model)
+                        .placeholder(R.drawable.ic_subforest) // 기본 로고
+                        .error(R.drawable.ic_subforest)
+                        .into(logo);
             } else {
                 logo.setImageResource(R.drawable.ic_subforest);
             }

@@ -11,11 +11,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -24,48 +20,53 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+/**
+ * 가벼운 메모리 기반 목 서버
+ * - 로그인/회원가입
+ * - 마이페이지(me/notification/deactivate/logout)
+ * - 서비스 검색 / 커스텀 서비스 GET/POST
+ * - 구독 목록/상세/등록/수정/삭제
+ * - 대시보드 요약 / 임박 목록
+ */
 public class MockInterceptor implements Interceptor {
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final Gson gson = new Gson();
 
-    // ======= in-memory 데이터 =======
     private long nextId = 100;
-    private final List<Map<String, Object>> subscriptions = new ArrayList<>();
+    private final List<Map<String, Object>> subs = new ArrayList<>();
     private final List<Map<String, Object>> services = new ArrayList<>();
-    private final List<Map<String, Object>> customServices = new ArrayList<>();
+    private final List<Map<String, Object>> customs = new ArrayList<>();
     private final Map<String, Object> me = new LinkedHashMap<>();
 
     public MockInterceptor() {
-        // 유저(마이페이지)
+        // me
         me.put("id", 1);
         me.put("email", "test@naver.com");
         me.put("name", "홍길동");
         me.put("notificationEnabled", true);
         me.put("status", "ACTIVE");
 
-        // 서비스 샘플(검색용)
-        services.add(makeService(1, "넷플릭스", "https://cdn.example.com/netflix.png"));
-        services.add(makeService(2, "유튜브 프리미엄", "https://cdn.example.com/youtube.png"));
-        services.add(makeService(3, "디즈니+", "https://cdn.example.com/disney.png"));
-        services.add(makeService(4, "왓챠", "https://cdn.example.com/watcha.png"));
+        // services
+        services.add(svc(1, "넷플릭스", "/static/logo/netflix.png"));
+        services.add(svc(2, "유튜브 프리미엄", "/static/logo/youtube.png"));
+        services.add(svc(3, "디즈니+", "/static/logo/disney.png"));
+        services.add(svc(4, "왓챠", "/static/logo/watcha.png"));
 
-        // 구독 샘플(리스트/상세/수정/삭제용)
-        subscriptions.add(makeSub(10, "넷플릭스", 13500, "2025-08-12", 30, true, false, "https://cdn.example.com/netflix.png"));
-        subscriptions.add(makeSub(11, "유튜브 프리미엄", 7900, "2025-08-01", 30, false, true, "https://cdn.example.com/youtube.png"));
+        // subscriptions (샘플)
+        subs.add(sub(10, "넷플릭스", 13500, "2025-08-12", 30, true, false, "/static/logo/netflix.png"));
+        subs.add(sub(11, "유튜브 프리미엄", 7900, "2025-08-01", 30, false, true, "/static/logo/youtube.png"));
         nextId = 12;
     }
 
-    private Map<String, Object> makeService(long id, String name, @Nullable String logo) {
+    private Map<String, Object> svc(long id, String name, @Nullable String logo) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", id);
-        m.put("name", name);
-        m.put("logoUrl", logo);
+        m.put("id", id); m.put("name", name); m.put("logoUrl", logo);
         return m;
     }
 
-    private Map<String, Object> makeSub(long id, String serviceName, int amount, String startDate,
-                                        int repeatDays, boolean auto, boolean shared, @Nullable String logo) {
+    private Map<String, Object> sub(long id, String serviceName, int amount, String startDate,
+                                    int repeatDays, boolean auto, boolean shared, @Nullable String logo) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", id);
         m.put("serviceName", serviceName);
@@ -82,94 +83,75 @@ public class MockInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         Request req = chain.request();
         String method = req.method();
-        String path = req.url().encodedPath();            // "/subscriptions", "/mypage/me" 등
-        String query = decode(req.url().encodedQuery());  // "page=0&size=20" 등
-        String body = readBody(req);
+        String path   = req.url().encodedPath();              // "/subscriptions" 형태
+        String query  = dec(req.url().encodedQuery());
+        String body   = readBody(req);
 
-        // ===== AUTH (대충만) =====
-        if (method.equals("POST") && path.equals("/auth/login")) {
-            String json = "{\"token\":\"mock-token\",\"email\":\"test@naver.com\",\"name\":\"홍길동\",\"id\":1}";
-            return ok(req, json);
-        }
-        if (method.equals("POST") && path.equals("/auth/signup")) {
-            // 그냥 성공했다고 가정
-            String json = "{\"id\":2,\"email\":\"new@naver.com\",\"name\":\"새유저\"}";
-            return ok(req, json);
-        }
-        if (method.equals("POST") && (path.equals("/auth/logout") || path.equals("/mypage/logout"))) {
-            return ok(req, "{\"message\":\"Logged out successfully\"}");
-        }
+        // -------- Auth --------
+        if (is(method, "POST") && eq(path, "/auth/login"))  return ok(req, "{\"token\":\"mock-token\",\"email\":\"test@naver.com\",\"name\":\"홍길동\"}");
+        if (is(method, "POST") && eq(path, "/auth/signup")) return ok(req, "{\"id\":2,\"email\":\"new@naver.com\",\"name\":\"새유저\"}");
+        if (is(method, "POST") && eq(path, "/auth/logout")) return ok(req, msg("Logged out successfully"));
 
-        // ===== MYPAGE =====
-        if (method.equals("GET") && path.equals("/mypage/me")) {
-            return ok(req, gson.toJson(me));
-        }
-        if (method.equals("POST") && path.equals("/mypage/change-password")) {
-            return ok(req, "{\"message\":\"Password changed successfully\"}");
-        }
-        if (method.equals("PATCH") && path.equals("/mypage/notification")) {
-            // enabled=true/false or body {notificationEnabled:true}
-            Boolean enabled = null;
-            String en = getQueryParam(query, "enabled");
-            if (en != null) enabled = en.equalsIgnoreCase("true") || en.equals("1");
-            if (enabled == null) {
-                try {
-                    Type t = new TypeToken<Map<String, Object>>(){}.getType();
-                    Map<String, Object> map = gson.fromJson(body, t);
-                    if (map != null && map.containsKey("notificationEnabled")) {
-                        Object v = map.get("notificationEnabled");
-                        if (v instanceof Boolean) enabled = (Boolean) v;
-                        else if (v instanceof String) enabled = ((String) v).equalsIgnoreCase("true");
-                    }
-                } catch (Exception ignore) {}
-            }
-            if (enabled == null) enabled = true;
+        // -------- MyPage --------
+        if (is(method, "GET")  && eq(path, "/mypage/me"))               return ok(req, gson.toJson(me));
+        if (is(method, "POST") && eq(path, "/mypage/change-password"))  return ok(req, msg("Password changed successfully"));
+        if (is(method, "PATCH")&& eq(path, "/mypage/notification")) {
+            Boolean enabled = qpBool(query, "enabled");
+            if (enabled == null) enabled = bodyBool(body, "notificationEnabled", true);
             me.put("notificationEnabled", enabled);
             return ok(req, "{\"notificationEnabled\":" + enabled + "}");
         }
-        if (method.equals("POST") && path.equals("/mypage/deactivate")) {
-            me.put("status", "INACTIVE");
-            return ok(req, "{\"message\":\"Account deactivated\"}");
+        if (is(method, "POST") && eq(path, "/mypage/deactivate")) { me.put("status","INACTIVE"); return ok(req, msg("Account deactivated")); }
+        if (is(method, "POST") && eq(path, "/mypage/logout"))     return ok(req, msg("Logged out successfully"));
+
+        // -------- Dashboard --------
+        if (is(method, "GET") && eq(path, "/dashboard/summary")) {
+            int total = subs.stream().mapToInt(s -> toInt(s.get("amount"), 0)).sum();
+            Map<String, Integer> chart = new LinkedHashMap<>();
+            for (Map<String,Object> s : subs) {
+                String n = String.valueOf(s.get("serviceName"));
+                int a = toInt(s.get("amount"), 0);
+                chart.put(n, chart.getOrDefault(n, 0) + a);
+            }
+            Map<String,Object> res = new LinkedHashMap<>();
+            res.put("totalAmount", total);
+            res.put("subscriptionCount", subs.size());
+            res.put("chartData", chart);
+            return ok(req, gson.toJson(res));
         }
 
-        // ===== SERVICES =====
-        if (method.equals("GET") && path.equals("/services/search")) {
-            String q = getQueryParam(query, "q");
+        // -------- Services --------
+        if (is(method, "GET") && eq(path, "/services/search")) {
+            String q = qp(query, "q");
             List<Map<String, Object>> out = new ArrayList<>();
-            if (q == null || q.trim().isEmpty()) {
-                out.addAll(services);
-            } else {
+            if (q == null || q.trim().isEmpty()) out.addAll(services);
+            else {
                 String ql = q.toLowerCase(Locale.ROOT);
                 for (Map<String, Object> s : services) {
-                    String name = String.valueOf(s.get("name"));
-                    if (name.toLowerCase(Locale.ROOT).contains(ql)) out.add(s);
+                    if (String.valueOf(s.get("name")).toLowerCase(Locale.ROOT).contains(ql)) out.add(s);
                 }
             }
             return ok(req, gson.toJson(out));
         }
 
-        // ===== CUSTOM SERVICES =====
-        if (method.equals("GET") && path.equals("/custom-services")) {
-            return ok(req, gson.toJson(customServices));
-        }
-        if (method.equals("POST") && path.equals("/custom-services")) {
-            // body: { userId, name, logoUrl }
-            Type t = new TypeToken<Map<String, Object>>(){}.getType();
-            Map<String, Object> payload = safeJsonToMap(body, t);
+        // -------- Custom Services --------
+        if (is(method, "GET") && eq(path, "/custom-services"))  return ok(req, gson.toJson(customs));
+        if (is(method, "POST")&& eq(path, "/custom-services")) {
+            Map<String, Object> p = jsonToMap(body);
             Map<String, Object> cs = new LinkedHashMap<>();
             cs.put("id", ++nextId);
-            cs.put("userId", payload.getOrDefault("userId", 1));
-            cs.put("name", payload.getOrDefault("name", "내서비스"));
-            cs.put("logoUrl", payload.get("logoUrl"));
-            customServices.add(cs);
+            cs.put("userId", p.getOrDefault("userId", 1));
+            cs.put("name", p.getOrDefault("name", "내서비스"));
+            cs.put("logoUrl", p.get("logoUrl"));
+            customs.add(cs);
             return ok(req, gson.toJson(cs));
         }
 
-        // ===== SUBSCRIPTIONS =====
-        if (method.equals("GET") && path.equals("/subscriptions")) {
-            // Page<SubscriptionListItemDto>
+        // -------- Subscriptions --------
+        // 목록 (pageable)
+        if (is(method, "GET") && eq(path, "/subscriptions")) {
             List<Map<String, Object>> content = new ArrayList<>();
-            for (Map<String, Object> s : subscriptions) {
+            for (Map<String, Object> s : subs) {
                 Map<String, Object> lite = new LinkedHashMap<>();
                 lite.put("id", s.get("id"));
                 lite.put("serviceName", s.get("serviceName"));
@@ -178,137 +160,117 @@ public class MockInterceptor implements Interceptor {
                 lite.put("logoUrl", s.get("logoUrl"));
                 content.add(lite);
             }
-            Map<String, Object> res = new LinkedHashMap<>();
-            res.put("content", content);
-            res.put("totalElements", content.size());
-            res.put("totalPages", 1);
-            return ok(req, gson.toJson(res));
+            Map<String, Object> page = new LinkedHashMap<>();
+            page.put("content", content);
+            page.put("totalElements", content.size());
+            page.put("totalPages", 1);
+            return ok(req, gson.toJson(page));
         }
 
-        if (method.equals("GET") && path.startsWith("/subscriptions/")) {
-            Long id = lastPathId(path);
-            Map<String, Object> found = findById(subscriptions, id);
-            if (found == null) return notFound(req);
-            return ok(req, gson.toJson(found));
+        // 상세
+        if (is(method, "GET") && path.matches("^/subscriptions/\\d+$")) {
+            long id = lastId(path);
+            Map<String, Object> f = findById(subs, id);
+            if (f == null) return notFound(req);
+            return ok(req, gson.toJson(f));
         }
 
-        if (method.equals("POST") && path.equals("/subscriptions")) {
-            // body: SubscriptionRequest (대충 받아서 저장)
-            Type t = new TypeToken<Map<String, Object>>(){}.getType();
-            Map<String, Object> payload = safeJsonToMap(body, t);
-
+        // 등록
+        if (is(method, "POST") && eq(path, "/subscriptions")) {
+            Map<String, Object> p = jsonToMap(body);
             long id = ++nextId;
             String name = "커스텀";
-            // serviceId / customServiceId 보고 이름 추정(간단히)
-            Object sid = payload.get("serviceId");
-            Object csid = payload.get("customServiceId");
+            Object sid = p.get("serviceId"), csid = p.get("customServiceId");
             if (sid instanceof Number) {
-                Map<String, Object> svc = findById(services, ((Number) sid).longValue());
-                if (svc != null) name = String.valueOf(svc.get("name"));
+                Map<String,Object> s = findById(services, ((Number) sid).longValue());
+                if (s != null) name = String.valueOf(s.get("name"));
             } else if (csid instanceof Number) {
-                Map<String, Object> cs = findById(customServices, ((Number) csid).longValue());
-                if (cs != null) name = String.valueOf(cs.get("name"));
+                Map<String,Object> c = findById(customs, ((Number) csid).longValue());
+                if (c != null) name = String.valueOf(c.get("name"));
             }
-
-            Map<String, Object> sub = makeSub(
+            Map<String, Object> m = sub(
                     id,
                     name,
-                    toInt(payload.get("amount"), 0),
-                    str(payload.get("startDate"), "2025-08-01"),
-                    toInt(payload.get("repeatCycleDays"), 30),
-                    toBool(payload.get("autoPayment")),
-                    toBool(payload.get("isShared")),
+                    toInt(p.get("amount"), 0),
+                    str(p.get("startDate"), "2025-08-01"),
+                    toInt(p.get("repeatCycleDays"), 30),
+                    toBool(p.get("autoPayment")),
+                    toBool(p.get("isShared")),
                     null
             );
-            subscriptions.add(sub);
-            return ok(req, gson.toJson(sub));
+            subs.add(m);
+            return ok(req, gson.toJson(m));
         }
 
-        if (method.equals("PUT") && path.startsWith("/subscriptions/")) {
-            Long id = lastPathId(path);
-            Map<String, Object> target = findById(subscriptions, id);
-            if (target == null) return notFound(req);
-
-            Type t = new TypeToken<Map<String, Object>>(){}.getType();
-            Map<String, Object> payload = safeJsonToMap(body, t);
-
-            if (payload.containsKey("amount")) target.put("amount", toInt(payload.get("amount"), (Integer) target.get("amount")));
-            if (payload.containsKey("startDate")) target.put("startDate", str(payload.get("startDate"), (String) target.get("startDate")));
-            if (payload.containsKey("repeatCycleDays")) target.put("repeatCycleDays", toInt(payload.get("repeatCycleDays"), (Integer) target.get("repeatCycleDays")));
-            if (payload.containsKey("autoPayment")) target.put("autoPayment", toBool(payload.get("autoPayment")));
-            if (payload.containsKey("isShared")) target.put("isShared", toBool(payload.get("isShared")));
-
-            // 서비스/커스텀 서비스 변경 시 이름 교체(간단히)
-            if (payload.containsKey("serviceId")) {
-                Map<String, Object> svc = findById(services, toLong(payload.get("serviceId"), -1));
-                if (svc != null) {
-                    target.put("serviceName", svc.get("name"));
-                    target.put("logoUrl", svc.get("logoUrl"));
-                }
-            } else if (payload.containsKey("customServiceId")) {
-                Map<String, Object> cs = findById(customServices, toLong(payload.get("customServiceId"), -1));
-                if (cs != null) {
-                    target.put("serviceName", cs.get("name"));
-                    target.put("logoUrl", cs.get("logoUrl"));
-                }
+        // 수정
+        if (is(method, "PUT") && path.matches("^/subscriptions/\\d+$")) {
+            long id = lastId(path);
+            Map<String, Object> t = findById(subs, id);
+            if (t == null) return notFound(req);
+            Map<String,Object> p = jsonToMap(body);
+            if (p.containsKey("amount"))          t.put("amount", toInt(p.get("amount"), toInt(t.get("amount"),0)));
+            if (p.containsKey("startDate"))       t.put("startDate", str(p.get("startDate"), (String)t.get("startDate")));
+            if (p.containsKey("repeatCycleDays")) t.put("repeatCycleDays", toInt(p.get("repeatCycleDays"), toInt(t.get("repeatCycleDays"),30)));
+            if (p.containsKey("autoPayment"))     t.put("autoPayment", toBool(p.get("autoPayment")));
+            if (p.containsKey("isShared"))        t.put("isShared", toBool(p.get("isShared")));
+            if (p.containsKey("serviceId")) {
+                Map<String,Object> s = findById(services, toLong(p.get("serviceId"), -1));
+                if (s != null) { t.put("serviceName", s.get("name")); t.put("logoUrl", s.get("logoUrl")); }
             }
-            return ok(req, gson.toJson(target));
+            if (p.containsKey("customServiceId")) {
+                Map<String,Object> c = findById(customs, toLong(p.get("customServiceId"), -1));
+                if (c != null) { t.put("serviceName", c.get("name")); t.put("logoUrl", c.get("logoUrl")); }
+            }
+            return ok(req, gson.toJson(t));
         }
 
-        if (method.equals("DELETE") && path.startsWith("/subscriptions/")) {
-            Long id = lastPathId(path);
-            Map<String, Object> found = findById(subscriptions, id);
-            if (found == null) return notFound(req);
-            subscriptions.remove(found);
+        // 삭제
+        if (is(method, "DELETE") && path.matches("^/subscriptions/\\d+$")) {
+            long id = lastId(path);
+            Map<String, Object> f = findById(subs, id);
+            if (f == null) return notFound(req);
+            subs.remove(f);
             return noContent(req);
         }
 
-        if (method.equals("GET") && path.equals("/subscriptions/upcoming")) {
-            // 간단히 전체 반환
-            List<Map<String, Object>> content = new ArrayList<>();
-            for (Map<String, Object> s : subscriptions) {
-                Map<String, Object> lite = new LinkedHashMap<>();
-                lite.put("id", s.get("id"));
-                lite.put("serviceName", s.get("serviceName"));
-                lite.put("amount", s.get("amount"));
-                lite.put("nextPaymentDate", null);
-                lite.put("logoUrl", s.get("logoUrl"));
-                content.add(lite);
+        // 임박 목록
+        if (is(method, "GET") && eq(path, "/subscriptions/upcoming")) {
+            List<Map<String, Object>> ups = new ArrayList<>();
+            for (Map<String, Object> s : subs) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("serviceName", s.get("serviceName"));
+                m.put("amount", s.get("amount"));
+                m.put("nextPaymentDate", null);
+                m.put("logoUrl", s.get("logoUrl"));
+                ups.add(m);
             }
-            Map<String, Object> res = new LinkedHashMap<>();
-            res.put("content", content);
-            res.put("totalElements", content.size());
-            res.put("totalPages", 1);
-            return ok(req, gson.toJson(res));
+            return ok(req, gson.toJson(Collections.singletonMap("upcomingPayments", ups)));
         }
 
-        // 모르는 요청은 실제 네트워크로
+        // 알 수 없는 건 실제 통신
         return chain.proceed(req);
     }
 
-    // ===== helpers =====
+    // ---------- helpers ----------
+    private boolean is(String m, String target) { return m.equalsIgnoreCase(target); }
+    private boolean eq(String a, String b) { return a.equals(b); }
 
     private Response ok(Request req, String json) {
         return new Response.Builder()
-                .request(req)
-                .protocol(Protocol.HTTP_1_1)
+                .request(req).protocol(Protocol.HTTP_1_1)
                 .code(200).message("OK")
                 .body(ResponseBody.create(json, JSON))
                 .build();
     }
-
     private Response noContent(Request req) {
         return new Response.Builder()
-                .request(req)
-                .protocol(Protocol.HTTP_1_1)
+                .request(req).protocol(Protocol.HTTP_1_1)
                 .code(204).message("No Content")
                 .build();
     }
-
     private Response notFound(Request req) {
         return new Response.Builder()
-                .request(req)
-                .protocol(Protocol.HTTP_1_1)
+                .request(req).protocol(Protocol.HTTP_1_1)
                 .code(404).message("Not Found")
                 .body(ResponseBody.create("{\"message\":\"not found\"}", JSON))
                 .build();
@@ -320,44 +282,47 @@ public class MockInterceptor implements Interceptor {
         req.body().writeTo(buf);
         return buf.readUtf8();
     }
-
-    private static String decode(@Nullable String s) {
-        if (s == null) return "";
+    private static String dec(@Nullable String s) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return URLDecoder.decode(s, StandardCharsets.UTF_8);
+            return (s == null) ? "" : URLDecoder.decode(s, StandardCharsets.UTF_8);
         }
         return null;
     }
-
     @Nullable
-    private String getQueryParam(@Nullable String query, String key) {
+    private String qp(@Nullable String query, String key) {
         if (query == null || query.isEmpty()) return null;
-        String[] pairs = query.split("&");
-        for (String p : pairs) {
+        for (String p : query.split("&")) {
             int i = p.indexOf('=');
             if (i <= 0) continue;
             String k = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 k = URLDecoder.decode(p.substring(0, i), StandardCharsets.UTF_8);
             }
-            if (k.equals(key)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    return URLDecoder.decode(p.substring(i + 1), StandardCharsets.UTF_8);
-                }
+            if (k.equals(key)) if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                return URLDecoder.decode(p.substring(i + 1), StandardCharsets.UTF_8);
             }
         }
         return null;
     }
-
-    private Long lastPathId(String path) {
-        try {
-            String[] parts = path.split("/");
-            return Long.parseLong(parts[parts.length - 1]);
-        } catch (Exception e) {
-            return -1L;
-        }
+    private Boolean qpBool(String query, String key) {
+        String v = qp(query, key);
+        if (v == null) return null;
+        return "true".equalsIgnoreCase(v) || "1".equals(v);
     }
-
+    private Boolean bodyBool(String body, String key, boolean def) {
+        try {
+            Type t = new TypeToken<Map<String,Object>>(){}.getType();
+            Map<String,Object> m = gson.fromJson(body, t);
+            Object v = m.get(key);
+            if (v instanceof Boolean) return (Boolean) v;
+            if (v instanceof String) return "true".equalsIgnoreCase((String)v) || "1".equals(v);
+        } catch (Exception ignore) {}
+        return def;
+    }
+    private long lastId(String path) {
+        try { String[] p = path.split("/"); return Long.parseLong(p[p.length - 1]); }
+        catch (Exception e) { return -1; }
+    }
     private Map<String, Object> findById(List<Map<String, Object>> list, long id) {
         for (Map<String, Object> m : list) {
             Object v = m.get("id");
@@ -365,34 +330,26 @@ public class MockInterceptor implements Interceptor {
         }
         return null;
     }
-
-    private Map<String, Object> safeJsonToMap(String json, Type type) {
-        try { return gson.fromJson(json, type); } catch (Exception e) { return new LinkedHashMap<>(); }
+    private Map<String, Object> jsonToMap(String json) {
+        try {
+            Type t = new TypeToken<Map<String,Object>>(){}.getType();
+            Map<String,Object> m = gson.fromJson(json, t);
+            return m != null ? m : new LinkedHashMap<>();
+        } catch (Exception e) { return new LinkedHashMap<>(); }
     }
-
+    private String msg(String m) { return "{\"message\":\"" + m + "\"}"; }
     private int toInt(Object o, int def) {
-        try {
-            if (o instanceof Number) return ((Number) o).intValue();
-            if (o instanceof String) return Integer.parseInt((String) o);
-        } catch (Exception ignore) {}
-        return def;
+        try { if (o instanceof Number) return ((Number) o).intValue(); return Integer.parseInt(String.valueOf(o)); }
+        catch (Exception e) { return def; }
     }
-
     private long toLong(Object o, long def) {
-        try {
-            if (o instanceof Number) return ((Number) o).longValue();
-            if (o instanceof String) return Long.parseLong((String) o);
-        } catch (Exception ignore) {}
-        return def;
+        try { if (o instanceof Number) return ((Number) o).longValue(); return Long.parseLong(String.valueOf(o)); }
+        catch (Exception e) { return def; }
     }
-
     private boolean toBool(Object o) {
         if (o instanceof Boolean) return (Boolean) o;
-        if (o instanceof String) return ((String) o).equalsIgnoreCase("true") || o.equals("1");
+        if (o instanceof String) return "true".equalsIgnoreCase((String) o) || "1".equals(o);
         return false;
     }
-
-    private String str(Object o, String def) {
-        return o == null ? def : String.valueOf(o);
-    }
+    private String str(Object o, String def) { return o == null ? def : String.valueOf(o); }
 }

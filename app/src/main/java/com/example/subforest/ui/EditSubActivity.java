@@ -29,6 +29,7 @@ public class EditSubActivity extends AppCompatActivity {
     private Switch autoSwitch, shareSwitch;
     private Button saveButton;
     private ImageButton backButton;
+    private  TextView upText;
 
     private long id;
     @Nullable private Long selectedServiceId = null;
@@ -67,6 +68,7 @@ public class EditSubActivity extends AppCompatActivity {
         initAutoComplete();
 
         saveButton.setText("수정하기");
+        upText.setText("구독 수정");
         saveButton.setOnClickListener(v -> save());
         backButton.setOnClickListener(v -> finish());
 
@@ -83,6 +85,7 @@ public class EditSubActivity extends AppCompatActivity {
         shareSwitch     = findViewById(R.id.shareSwitch);
         saveButton      = findViewById(R.id.saveButton);
         backButton      = findViewById(R.id.backButton);
+        upText          = findViewById(R.id.upText);
     }
 
     private void initSpinner() {
