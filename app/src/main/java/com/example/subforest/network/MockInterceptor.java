@@ -55,9 +55,9 @@ public class MockInterceptor implements Interceptor {
 
         // subscriptions (샘플)
         subs.add(sub(10, "넷플릭스", 13500, "2025-07-22", 30, true, false, "/static/logo/netflix.png"));
-        subs.add(sub(11, "유튜브 프리미엄", 7900, "2025-07-25", 30, false, true, "/static/logo/youtube.png"));
-        subs.add(sub(12, "디즈니+", 3500, "2025-08-15", 30, true, false, "/static/logo/netflix.png"));
-        subs.add(sub(13, "왓챠", 900, "2025-08-09", 30, false, true, "/static/logo/netflix.png"));
+        subs.add(sub(11, "유튜브 프리미엄", 7900, "2025-07-25", 365, false, true, "/static/logo/youtube.png"));
+        subs.add(sub(12, "디즈니+", 3500, "2025-08-15", 180, true, false, "/static/logo/netflix.png"));
+        subs.add(sub(13, "왓챠", 900, "2025-08-09", 90, false, true, "/static/logo/netflix.png"));
         nextId = 14;
     }
 
@@ -264,7 +264,7 @@ public class MockInterceptor implements Interceptor {
                 m.put("serviceName", name);
                 m.put("logoUrl", logo);
                 m.put("amount", amount);
-                m.put("repeatCycleDays", repeat);
+                m.put("paymentCycle", repeat);
                 m.put("nextBillingDate", next.toString()); // yyyy-MM-dd
                 m.put("daysLeft", remaining);
                 m.put("autoPayment", auto);

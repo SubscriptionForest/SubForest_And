@@ -54,7 +54,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="18dp"
+        android:layout_marginStart="4dp"
         android:textStyle="bold"
         android:textColor="#000000"
         android:textSize="12sp"
@@ -74,16 +75,17 @@
             android:id="@+id/remaining_days_icon"
             android:layout_width="16dp"
             android:layout_height="16dp"
+            android:layout_marginStart="4dp"
             android:contentDescription="remaining_days_icon"
             tools:src="@drawable/ic_warning_red" />
 
         <TextView
             android:id="@+id/next_payment_date"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="16dp"
             android:layout_marginStart="5dp"
             android:textColor="#000000"
-            android:textSize="10sp"
+            android:textSize="11sp"
             tools:text="0 일 남음" />
     </LinearLayout>
 </RelativeLayout>

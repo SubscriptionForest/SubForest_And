@@ -47,8 +47,14 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
         // 3. 텍스트 설정
         holder.serviceName.setText(payment.getServiceName());
         holder.amount.setText(String.format("%,d원", payment.getAmount()));
-        holder.paymentCycle.setText(payment.getPaymentCycle());
-        holder.nextPaymentDate.setText(payment.getDaysLeft() + " 일 남음");
+        String paymentCycle;
+        switch (payment.getPaymentCycle()) {
+            case "30": holder.paymentCycle.setText("1개월"); break;
+            case "90": holder.paymentCycle.setText("3개월"); break;
+            case "180": holder.paymentCycle.setText("6개월"); break;
+            case "365": holder.paymentCycle.setText("1년");
+        }
+        holder.nextPaymentDate.setText("D-" + payment.getDaysLeft());
 
         // 4. 남은 일수에 따라 배경 설정 (새로 추가된 부분)
         int backgroundRes = getRemainingDaysBackground(payment.getDaysLeft());
