@@ -1,4 +1,3 @@
-// HomeActivity.java
 package com.example.subforest;
 
 import android.content.Context;
@@ -12,7 +11,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import android.view.Gravity;
 import com.example.subforest.adapter.PaymentServiceAdapter;
 import com.example.subforest.adapter.SubscribedServiceAdapter;
 import com.example.subforest.model.DashboardSummaryResponse;
@@ -32,6 +31,9 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener; // 리스너 추가
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.data.Entry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +43,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements OnChartValueSelectedListener { // 리스너 인터페이스 구현
 
     private TextView greetingText, totalCostText;
     private PieChart pieChart;
@@ -217,8 +219,35 @@ public class HomeActivity extends AppCompatActivity {
         pieChart.setHoleRadius(50f);
         pieChart.setTransparentCircleRadius(55f);
         pieChart.setDrawEntryLabels(false);
-        pieChart.getLegend().setOrientation(Legend.LegendOrientation.VERTICAL);
+        pieChart.getLegend().setEnabled(false); // 범례 제거
         pieChart.invalidate();
+        pieChart.setOnChartValueSelectedListener(this); // 클릭 리스너 추가
+    }
+
+    // PieChart 리스너 메서드 구현
+
+    @Override
+    public void onValueSelected(Entry e, Highlight h) {
+        // PieEntry 객체에서 플랫폼 이름과 금액 정보를 가져옵니다.
+        PieEntry entry = (PieEntry) e;
+        String platformName = entry.getLabel(); // 플랫폼 이름
+        float cost = entry.getValue(); // 금액
+
+        // 금액을 정수 형식으로 변환하고 쉼표를 추가합니다.
+        String formattedCost = String.format("%,.0f원", cost);
+
+        // Toast에 표시할 최종 메시지를 만듭니다.
+        String message = platformName + ": " + formattedCost;
+
+        // Toast를 만들고 위치를 설정한 후 보여줍니다.
+        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 150);
+        toast.show();
+    }
+
+    @Override
+    public void onNothingSelected() {
+        // 아무것도 선택되지 않았을 때의 동작
     }
 
     // 사용자 ID를 가져오는 임시 메서드
