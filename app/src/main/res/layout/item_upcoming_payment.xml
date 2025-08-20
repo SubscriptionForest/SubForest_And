@@ -25,6 +25,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="2dp"
         android:gravity="end"
         android:orientation="vertical">
 
@@ -32,9 +34,9 @@
             android:id="@+id/payment_amount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="12sp"
+            android:textStyle="bold"
             tools:text="6,900원" />
 
         <TextView
@@ -81,7 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:textColor="#000000"
-            android:textSize="6sp"
-            tools:text="7 일 남음" />
+            android:textSize="10sp"
+            tools:text="0 일 남음" />
     </LinearLayout>
 </RelativeLayout>
