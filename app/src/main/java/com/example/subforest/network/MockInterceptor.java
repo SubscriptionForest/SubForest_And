@@ -56,7 +56,9 @@ public class MockInterceptor implements Interceptor {
         // subscriptions (샘플)
         subs.add(sub(10, "넷플릭스", 13500, "2025-08-12", 30, true, false, "/static/logo/netflix.png"));
         subs.add(sub(11, "유튜브 프리미엄", 7900, "2025-08-01", 30, false, true, "/static/logo/youtube.png"));
-        nextId = 12;
+        subs.add(sub(12, "디즈니+", 3500, "2025-08-15", 30, true, false, "/static/logo/netflix.png"));
+        subs.add(sub(13, "왓챠", 900, "2025-08-09", 30, false, true, "/static/logo/netflix.png"));
+        nextId = 14;
     }
 
     private Map<String, Object> svc(long id, String name, @Nullable String logo) {
@@ -233,19 +235,6 @@ public class MockInterceptor implements Interceptor {
             return noContent(req);
         }
 
-        // 임박 목록
-        if (is(method, "GET") && eq(path, "/subscriptions/upcoming")) {
-            List<Map<String, Object>> ups = new ArrayList<>();
-            for (Map<String, Object> s : subs) {
-                Map<String, Object> m = new LinkedHashMap<>();
-                m.put("serviceName", s.get("serviceName"));
-                m.put("amount", s.get("amount"));
-                m.put("nextPaymentDate", null);
-                m.put("logoUrl", s.get("logoUrl"));
-                ups.add(m);
-            }
-            return ok(req, gson.toJson(Collections.singletonMap("content", ups)));
-        }
         if (is(method, "GET") && path.matches("^/(api/)?subscriptions/upcoming/?$")) {
             int size   = queryInt(req, "size", 20);
             int number = queryInt(req, "page", 0);
@@ -339,6 +328,7 @@ public class MockInterceptor implements Interceptor {
         return new Response.Builder()
                 .request(req).protocol(Protocol.HTTP_1_1)
                 .code(204).message("No Content")
+                .body(ResponseBody.create(new byte[0], (MediaType) null)) // ← 빈 바디
                 .build();
     }
     private Response notFound(Request req) {

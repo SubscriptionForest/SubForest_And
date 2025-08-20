@@ -178,7 +178,10 @@ public class ListActivity extends AppCompatActivity {
         Button yes = new Button(this);
         yes.setText("예");
         yes.setLayoutParams(btnParams);
-        yes.setOnClickListener(v -> performDelete(item));
+        yes.setOnClickListener(v -> {
+            performDelete(item);
+            dialog.dismiss();
+        });
         Button no = new Button(this);
         no.setText("아니요");
         no.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
