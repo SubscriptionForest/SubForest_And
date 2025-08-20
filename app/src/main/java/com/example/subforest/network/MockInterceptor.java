@@ -244,7 +244,7 @@ public class MockInterceptor implements Interceptor {
                 m.put("logoUrl", s.get("logoUrl"));
                 ups.add(m);
             }
-            return ok(req, gson.toJson(Collections.singletonMap("upcomingPayments", ups)));
+            return ok(req, gson.toJson(Collections.singletonMap("content", ups)));
         }
 
         // POST /api/push/register
