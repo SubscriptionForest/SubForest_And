@@ -8,10 +8,13 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.Gravity;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.Gravity;
+import androidx.recyclerview.widget.GridLayoutManager;
+
+
 import com.example.subforest.adapter.PaymentServiceAdapter;
 import com.example.subforest.adapter.SubscribedServiceAdapter;
 import com.example.subforest.model.DashboardSummaryResponse;
@@ -117,9 +120,10 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
     }
 
     private void setupRecyclerViews() {
-        // 구독 중인 서비스 RecyclerView (가로 스크롤)
-        subscribedServicesRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        // 구독 중인 서비스 RecyclerView (2x2 그리드)
+        subscribedServicesRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         subscribedServicesRecyclerView.setAdapter(new SubscribedServiceAdapter(new ArrayList<>()));
+
 
         // 결제 예정 서비스 RecyclerView (가로 스크롤)
         paymentRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
