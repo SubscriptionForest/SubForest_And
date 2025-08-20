@@ -54,8 +54,8 @@ public class MockInterceptor implements Interceptor {
         services.add(svc(4, "왓챠", "/static/logo/watcha.png"));
 
         // subscriptions (샘플)
-        subs.add(sub(10, "넷플릭스", 13500, "2025-08-12", 30, true, false, "/static/logo/netflix.png"));
-        subs.add(sub(11, "유튜브 프리미엄", 7900, "2025-08-01", 30, false, true, "/static/logo/youtube.png"));
+        subs.add(sub(10, "넷플릭스", 13500, "2025-07-22", 30, true, false, "/static/logo/netflix.png"));
+        subs.add(sub(11, "유튜브 프리미엄", 7900, "2025-07-25", 30, false, true, "/static/logo/youtube.png"));
         subs.add(sub(12, "디즈니+", 3500, "2025-08-15", 30, true, false, "/static/logo/netflix.png"));
         subs.add(sub(13, "왓챠", 900, "2025-08-09", 30, false, true, "/static/logo/netflix.png"));
         nextId = 14;
@@ -257,6 +257,7 @@ public class MockInterceptor implements Interceptor {
                 java.time.LocalDate start = parseDate(startY, today);
                 java.time.LocalDate next  = computeNextBilling(start, repeat, today);
                 long remaining = java.time.temporal.ChronoUnit.DAYS.between(today, next);
+                //long remaining = 4;
 
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", id);
@@ -265,7 +266,7 @@ public class MockInterceptor implements Interceptor {
                 m.put("amount", amount);
                 m.put("repeatCycleDays", repeat);
                 m.put("nextBillingDate", next.toString()); // yyyy-MM-dd
-                m.put("remainingDays", remaining);
+                m.put("daysLeft", remaining);
                 m.put("autoPayment", auto);
                 m.put("shared", shared);
                 rows.add(m);
