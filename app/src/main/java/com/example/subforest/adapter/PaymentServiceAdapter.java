@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout; // RelativeLayout import 추가
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -31,7 +32,7 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         PaymentService payment = payments.get(position);
 
-        // 1. 서비스 로고 이미지 로드 (Glide 사용)
+        // 1. 서비스 로고 이미지 로드
         Object model = LogoResolver.toGlideModel(holder.itemView.getContext(), payment.getServiceLogoUrl());
         Glide.with(holder.itemView.getContext())
                 .load(model)
@@ -49,7 +50,9 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
         holder.paymentCycle.setText(payment.getPaymentCycle());
         holder.nextPaymentDate.setText(payment.getDaysLeft() + " 일 남음");
 
-        // 배경색을 동적으로 설정하는 코드는 제거됩니다.
+        // 4. 남은 일수에 따라 배경 설정 (새로 추가된 부분)
+        int backgroundRes = getRemainingDaysBackground(payment.getDaysLeft());
+        holder.rootLayout.setBackgroundResource(backgroundRes);
     }
 
     @Override
@@ -62,7 +65,17 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
         notifyDataSetChanged();
     }
 
-    // 남은 일수에 따라 아이콘을 반환하는 메서드는 그대로 둡니다.
+    // 남은 일수에 따라 배경 Drawable을 반환하는 메서드 (새로 추가)
+    private int getRemainingDaysBackground(int daysLeft) {
+        if (daysLeft <= 3) {
+            return R.drawable.item_background_red;
+        } else if (daysLeft <= 7) {
+            return R.drawable.item_background_yellow;
+        } else {
+            return R.drawable.item_background_green;
+        }
+    }
+
     private int getRemainingDaysIcon(int daysLeft) {
         if (daysLeft <= 3) {
             return R.drawable.ic_warning_red;
@@ -74,11 +87,15 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        // rootLayout 참조 추가
+        RelativeLayout rootLayout;
         ImageView serviceLogo, remainingDaysIcon;
         TextView serviceName, amount, paymentCycle, nextPaymentDate;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // rootLayout 초기화 추가
+            rootLayout = itemView.findViewById(R.id.payment_card_root);
             serviceLogo = itemView.findViewById(R.id.service_logo);
             remainingDaysIcon = itemView.findViewById(R.id.remaining_days_icon);
             serviceName = itemView.findViewById(R.id.service_name);
