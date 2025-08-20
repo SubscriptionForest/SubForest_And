@@ -246,6 +246,66 @@ public class MockInterceptor implements Interceptor {
             }
             return ok(req, gson.toJson(Collections.singletonMap("content", ups)));
         }
+        if (is(method, "GET") && path.matches("^/(api/)?subscriptions/upcoming/?$")) {
+            int size   = queryInt(req, "size", 20);
+            int number = queryInt(req, "page", 0);
+            // userId는 목에선 의미 없지만 쿼리로 넘어오니 일단 소비만 해둠
+            String userId = req.url().queryParameter("userId");
+
+            java.time.LocalDate today = java.time.LocalDate.now();
+            List<Map<String, Object>> rows = new ArrayList<>();
+
+            for (Map<String, Object> s : subs) {
+                long   id     = toLong(s.get("id"), 0L);
+                String name   = coalesce(s.get("serviceName"), s.get("name")); // 양쪽 키 호환
+                String logo   = toStr(s.get("logoUrl"), null);
+                int    amount = toInt(s.get("amount"), 0);
+                int    repeat = toInt(coalesce(s.get("repeatCycleDays"), s.get("repeatDays")), 30);
+                String startY = toStr(s.get("startDate"), "1970-01-01");
+                boolean auto  = toBool(coalesce(s.get("autoPayment"), s.get("auto")));
+                boolean shared= toBool(coalesce(s.get("isShared"), s.get("shared")));
+
+                java.time.LocalDate start = parseDate(startY, today);
+                java.time.LocalDate next  = computeNextBilling(start, repeat, today);
+                long remaining = java.time.temporal.ChronoUnit.DAYS.between(today, next);
+
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id", id);
+                m.put("serviceName", name);
+                m.put("logoUrl", logo);
+                m.put("amount", amount);
+                m.put("repeatCycleDays", repeat);
+                m.put("nextBillingDate", next.toString()); // yyyy-MM-dd
+                m.put("remainingDays", remaining);
+                m.put("autoPayment", auto);
+                m.put("shared", shared);
+                rows.add(m);
+            }
+
+            // nextBillingDate 오름차순 정렬
+            rows.sort(Comparator.comparing(o -> java.time.LocalDate.parse((String) o.get("nextBillingDate"))));
+
+            // 페이징
+            int totalElements = rows.size();
+            int from = Math.min(number * size, totalElements);
+            int to   = Math.min(from + size, totalElements);
+            List<Map<String, Object>> pageContent = new ArrayList<>(rows.subList(from, to));
+            int totalPages = (int) Math.ceil(totalElements / (double) size);
+
+            Map<String, Object> page = new LinkedHashMap<>();
+            page.put("content", pageContent);
+            page.put("totalElements", totalElements);
+            page.put("totalPages", totalPages);
+            page.put("size", size);
+            page.put("number", number);
+            page.put("first", number == 0);
+            page.put("last", to >= totalElements);
+            page.put("empty", pageContent.isEmpty());
+
+            return ok(req, gson.toJson(page)); // 200 + application/json
+        }
+
+
 
         // POST /api/push/register
         if (is(method, "POST") && eq(path, "/api/push/register")) {
@@ -365,4 +425,32 @@ public class MockInterceptor implements Interceptor {
         return false;
     }
     private String str(Object o, String def) { return o == null ? def : String.valueOf(o); }
+
+    private static int queryInt(okhttp3.Request req, String key, int def) {
+        String v = req.url().queryParameter(key);
+        if (v == null) return def;
+        try { return Integer.parseInt(v); } catch (Exception e) { return def; }
+    }
+
+    private static String toStr(Object o, String def) {
+        return (o == null) ? def : String.valueOf(o);
+    }
+
+    private static String coalesce(Object a, Object b) {
+        return (a != null ? String.valueOf(a) : (b != null ? String.valueOf(b) : null));
+    }
+
+    private static java.time.LocalDate parseDate(String ymd, java.time.LocalDate def) {
+        try { return java.time.LocalDate.parse(ymd); } catch (Exception e) { return def; }
+    }
+
+    // startDate 기준으로 today 이후 첫 결제일 계산
+    private static java.time.LocalDate computeNextBilling(java.time.LocalDate start, int repeatDays, java.time.LocalDate today) {
+        if (repeatDays <= 0) repeatDays = 30;
+        if (!today.isAfter(start)) return start; // 아직 첫 결제 전
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(start, today);
+        long k = (long) Math.floor(daysBetween / (double) repeatDays) + 1;
+        return start.plusDays(k * (long) repeatDays);
+    }
+
 }
