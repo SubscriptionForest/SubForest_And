@@ -108,6 +108,14 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadDashboardSummary();
+        loadUpcomingPayments();
+        loadSubscribedServices();
+    }
+
     private void setupRecyclerViews() {
         // 구독 중인 서비스 RecyclerView (가로 스크롤)
         subscribedServicesRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
