@@ -77,7 +77,7 @@ public class MypageActivity extends AppCompatActivity {
             // 서버 반영
             ApiRepository.get(this).togglePush(isChecked, new ApiRepository.RepoCallback<Boolean>() {
                         @Override public void onSuccess(Boolean ok) {
-                            //Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
                         }
                         @Override public void onError(String msg) {
                             Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
@@ -338,7 +338,7 @@ public class MypageActivity extends AppCompatActivity {
         title.setTextSize(18);
         title.setTypeface(null, Typeface.BOLD);
         title.setTextColor(Color.BLACK);
-        title.setPadding(0, 0, 0, 35);
+        title.setPadding(0, 0, 0, 20);
         title.setGravity(Gravity.CENTER);
         return title;
     }

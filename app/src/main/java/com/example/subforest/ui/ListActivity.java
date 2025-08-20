@@ -1,12 +1,23 @@
 package com.example.subforest.ui;
 
+import android.app.Dialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.subforest.HomeActivity;
 import com.example.subforest.R;
 import com.example.subforest.network.ApiRepository;
+import com.example.subforest.network.TokenStore;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.text.ParseException;
@@ -64,15 +76,7 @@ public class ListActivity extends AppCompatActivity {
                 startActivity(i);
             }
             @Override public void onDelete(ApiRepository.SubscriptionItem item) {
-                ApiRepository.get(ListActivity.this).deleteSubscription(item.id, new ApiRepository.RepoCallback<Boolean>() {
-                    @Override public void onSuccess(Boolean ok) {
-                        Toast.makeText(ListActivity.this, "삭제됨", Toast.LENGTH_SHORT).show();
-                        load();
-                    }
-                    @Override public void onError(String msg) {
-                        Toast.makeText(ListActivity.this, "삭제 실패: " + msg, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                showDeleteConfirmDialog(item);
             }
             @Override public void onClick(ApiRepository.SubscriptionItem item) {}
         });
@@ -149,5 +153,97 @@ public class ListActivity extends AppCompatActivity {
         } catch (ParseException e) {
             return Long.MAX_VALUE;
         }
+    }
+
+    /*private void showDeleteConfirmDialog(ApiRepository.SubscriptionItem item) {
+        new AlertDialog.Builder(this)
+                .setTitle("삭제하시겠습니까?")
+                .setMessage("'" + item.name + "' 구독을 삭제합니다.")
+                .setPositiveButton("예", (dialog, which) -> performDelete(item))
+                .setNegativeButton("아니요", null)
+                .show();
+    }*/
+    private void showDeleteConfirmDialog(ApiRepository.SubscriptionItem item) {
+        Dialog dialog = createDialog();
+        LinearLayout layout = createBaseLayout();
+        TextView title = createTitle(item.name + " 구독을 삭제하시겠습니까?");
+        LinearLayout btnLayout = new LinearLayout(this);
+        btnLayout.setOrientation(LinearLayout.HORIZONTAL);
+        btnLayout.setGravity(Gravity.CENTER);
+        btnLayout.setPadding(0, 40, 0, 0);
+        LinearLayout.LayoutParams btnParams =
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        btnParams.setMargins(15, 0, 15, 0);
+
+        Button yes = new Button(this);
+        yes.setText("예");
+        yes.setLayoutParams(btnParams);
+        yes.setOnClickListener(v -> performDelete(item));
+        Button no = new Button(this);
+        no.setText("아니요");
+        no.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#B8DDA1")));
+        no.setLayoutParams(btnParams);
+        no.setOnClickListener(v -> dialog.dismiss());
+
+        btnLayout.addView(yes);
+        btnLayout.addView(no);
+
+        layout.addView(title);
+        layout.addView(btnLayout);
+
+        dialog.setContentView(layout);
+        dialog.show();
+    }
+
+    private void performDelete(ApiRepository.SubscriptionItem item) {
+        ApiRepository.get(this).deleteSubscription(item.id, new ApiRepository.RepoCallback<Boolean>() {
+            @Override public void onSuccess(Boolean ok) {
+                for (Iterator<ApiRepository.SubscriptionItem> it = current.iterator(); it.hasNext();) {
+                    if (it.next().id == item.id) {
+                        it.remove();
+                        break;
+                    }
+                }
+                applySort(sortSpinner.getSelectedItemPosition());
+                Toast.makeText(ListActivity.this, "삭제되었습니다.", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override public void onError(String msg) {
+                Toast.makeText(ListActivity.this, "삭제 실패: " + msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private Dialog createDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.gravity = Gravity.CENTER;
+            //params.width = WindowManager.LayoutParams.MATCH_PARENT;
+            window.setAttributes(params);
+        }
+        return dialog;
+    }
+
+    private LinearLayout createBaseLayout() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(100, 80, 100, 80);
+        layout.setBackgroundResource(R.drawable.bg_dialog);
+        return layout;
+    }
+
+    private TextView createTitle(String txt) {
+        TextView title = new TextView(this);
+        title.setText(txt);
+        title.setTextSize(18);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setTextColor(Color.BLACK);
+        title.setPadding(0, 0, 0, 20);
+        title.setGravity(Gravity.CENTER);
+        return title;
     }
 }
