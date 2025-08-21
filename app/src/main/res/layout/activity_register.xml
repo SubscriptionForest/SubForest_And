@@ -44,7 +44,7 @@
             android:layout_below="@id/header_layout"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="10dp"
-            android:src="@drawable/ic_subforest" />
+            android:src="@drawable/ic_subforest2" />
 
         <LinearLayout
             android:id="@+id/form_layout"

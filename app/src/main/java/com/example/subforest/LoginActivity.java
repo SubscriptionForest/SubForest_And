@@ -84,8 +84,8 @@ public class LoginActivity extends AppCompatActivity {
                                             SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
                                             sp.edit()
                                                     .putString("jwt_token", loginResponse.getToken())
-                                                    .putString("user_email", loginResponse.getEmail())
-                                                    .putString("user_name", loginResponse.getName())
+                                                    .putString("user_email", me.email)
+                                                    .putString("user_name", me.name)
                                                     .putLong("user_id", me.id)
                                                     .apply();
 

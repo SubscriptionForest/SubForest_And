@@ -1,16 +1,14 @@
 package com.example.subforest.ui;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.text.LineBreaker;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
-import android.text.Layout;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.AbsoluteSizeSpan;
@@ -41,10 +39,8 @@ public class MypageActivity extends AppCompatActivity {
     private static final String PREF_NAME = "UserSettings";
     private static final String PREF_NOTIFICATION = "notification_enabled";
 
-    private TextView tvNickname;
-    private TextView tvEmail;
+    private TextView tvNickname, tvEmail, tvStatus;
     private Switch switchNotification;
-    private TextView tvStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +54,25 @@ public class MypageActivity extends AppCompatActivity {
         switchNotification = findViewById(R.id.switchNotification);
         tvStatus = findViewById(R.id.tvNotificationStatus);
 
-        loadMe();
+        SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
+        tvNickname.setText(sp.getString("user_name", "00"));
+        tvEmail.setText(sp.getString("user_email", "00"));
+
+        ApiRepository.get(this).getMe(new ApiRepository.RepoCallback<>() {
+            @Override public void onSuccess(ApiRepository.UserProfile me) {
+                if (me != null) {
+                    // 서버 상태가 로컬과 다르면 맞춰줌
+                    if (me.notificationEnabled != switchNotification.isChecked()) {
+                        switchNotification.setChecked(me.notificationEnabled);
+                        preferences.edit().putBoolean(PREF_NOTIFICATION, me.notificationEnabled).apply();
+                        renderNotifyStatus(me.notificationEnabled);
+                    }
+                }
+            }
+            @Override public void onError(String msg) {
+                Toast.makeText(MypageActivity.this, "내 정보 조회 실패: " + msg, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         findViewById(R.id.btnChangePassword).setOnClickListener(v -> showPasswordDialog());
         findViewById(R.id.btnTerms).setOnClickListener(v -> showSimpleDialog());
@@ -71,18 +85,31 @@ public class MypageActivity extends AppCompatActivity {
         renderNotifyStatus(isEnabledLocal);
 
         switchNotification.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // 로컬에 먼저 저장
-            preferences.edit().putBoolean(PREF_NOTIFICATION, isChecked).apply();
-            renderNotifyStatus(isChecked);
-            // 서버 반영
-            ApiRepository.get(this).togglePush(isChecked, new ApiRepository.RepoCallback<Boolean>() {
+            /*ApiRepository.get(this).togglePush(isChecked, new ApiRepository.RepoCallback<Boolean>() {
                         @Override public void onSuccess(Boolean ok) {
                             Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
                         }
                         @Override public void onError(String msg) {
                             Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
                         }
-                    });
+                    });*/
+            ApiRepository.get(this).updateNotification(isChecked, new ApiRepository.RepoCallback<>() {
+                @Override public void onSuccess(ApiRepository.UserProfile profile) {
+                    if (profile != null) {
+                        switchNotification.setChecked(profile.notificationEnabled);
+                        preferences.edit().putBoolean(PREF_NOTIFICATION, profile.notificationEnabled).apply();
+                        renderNotifyStatus(profile.notificationEnabled);
+                        Toast.makeText(MypageActivity.this, "알림 변경 완료", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                @Override public void onError(String msg) {
+                    boolean originalState = !isChecked;
+                    switchNotification.setChecked(originalState);
+                    preferences.edit().putBoolean(PREF_NOTIFICATION, originalState).apply();
+                    renderNotifyStatus(originalState);
+                    Toast.makeText(MypageActivity.this, "알림 설정 실패: " + msg, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         BottomNavigationView nav = findViewById(R.id.bottomNavigationView);
@@ -116,26 +143,6 @@ public class MypageActivity extends AppCompatActivity {
                 );
             }
         }
-    }
-
-    private void loadMe() {
-        ApiRepository.get(this).getMe(new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
-            @Override public void onSuccess(ApiRepository.UserProfile me) {
-                if (me != null) {
-                    tvNickname.setText(me.name != null ? me.name : "");
-                    tvEmail.setText(me.email != null ? me.email : "");
-                    // 서버 상태가 로컬과 다르면 맞춰줌
-                    if (me.notificationEnabled != switchNotification.isChecked()) {
-                        switchNotification.setChecked(me.notificationEnabled);
-                        preferences.edit().putBoolean(PREF_NOTIFICATION, me.notificationEnabled).apply();
-                        renderNotifyStatus(me.notificationEnabled);
-                    }
-                }
-            }
-            @Override public void onError(String msg) {
-                Toast.makeText(MypageActivity.this, "내 정보 조회 실패: " + msg, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void renderNotifyStatus(boolean enabled) {

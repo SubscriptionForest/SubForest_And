@@ -33,7 +33,7 @@ public class SubscriptionAdapter extends ListAdapter<ApiRepository.SubscriptionI
     }
 
     private static final DiffUtil.ItemCallback<ApiRepository.SubscriptionItem> DIFF =
-            new DiffUtil.ItemCallback<ApiRepository.SubscriptionItem>() {
+            new DiffUtil.ItemCallback<>() {
                 @Override public boolean areItemsTheSame(@NonNull ApiRepository.SubscriptionItem a,
                                                          @NonNull ApiRepository.SubscriptionItem b) {
                     return a.id == b.id;

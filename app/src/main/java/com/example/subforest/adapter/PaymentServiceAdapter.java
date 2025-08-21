@@ -65,7 +65,7 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
         }
         holder.paymentCycle.setText(cycleText);
 
-        holder.nextPaymentDate.setText("D-" + remainingDays);
+        holder.nextPaymentDate.setText(remainingDays == 0 ? "D-day" : "D-" + remainingDays);
 
         // 4. 남은 일수에 따라 배경 설정
         int backgroundRes = getRemainingDaysBackground(remainingDays);

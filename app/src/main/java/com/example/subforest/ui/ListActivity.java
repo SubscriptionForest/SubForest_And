@@ -113,7 +113,7 @@ public class ListActivity extends AppCompatActivity {
 
     private void load() {
         ApiRepository.get(this).getSubscriptions(
-                new ApiRepository.RepoCallback<List<ApiRepository.SubscriptionItem>>() {
+                new ApiRepository.RepoCallback<>() {
                     @Override public void onSuccess(List<ApiRepository.SubscriptionItem> data) {
                         current.clear();
                         current.addAll(data);
@@ -195,7 +195,7 @@ public class ListActivity extends AppCompatActivity {
             Toast.makeText(this, "삭제할 항목을 다시 선택해주세요.", Toast.LENGTH_SHORT).show();
             return;
         }
-        ApiRepository.get(this).deleteSubscription(item.id, new ApiRepository.RepoCallback<Boolean>() {
+        ApiRepository.get(this).deleteSubscription(item.id, new ApiRepository.RepoCallback<>() {
             @Override public void onSuccess(Boolean ok) {
                 for (Iterator<ApiRepository.SubscriptionItem> it = current.iterator(); it.hasNext();) {
                     if (it.next().id == item.id) {
