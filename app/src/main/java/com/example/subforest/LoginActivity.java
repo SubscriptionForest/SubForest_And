@@ -1,4 +1,3 @@
-// LoginActivity.java
 package com.example.subforest;
 
 import android.content.Context;
@@ -19,6 +18,8 @@ import com.example.subforest.model.LoginResponse;
 import com.example.subforest.network.TokenStore;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.IOException;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -38,62 +39,76 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         registerBtn = findViewById(R.id.registerBtn);
 
-        // 로그인 버튼 클릭 → 백엔드 통신 후 홈 화면으로 이동한다.
+        // 로그인 버튼 클릭 → 백엔드 통신 후 홈 화면으로 이동
         loginBtn.setOnClickListener(v -> {
             String email = emailInput.getText().toString();
             String password = passwordInput.getText().toString();
 
-            // LoginRequest 객체 생성 (API 명세에 맞춤)
             LoginRequest loginRequest = new LoginRequest(email, password);
 
             ApiService apiService = ApiClient.get(this).create(ApiService.class);
             Call<LoginResponse> call = apiService.loginUser(loginRequest);
 
             call.enqueue(new Callback<LoginResponse>() {
-                @Override
-                public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        LoginResponse loginResponse = response.body();
-                        TokenStore ts = new TokenStore(getApplicationContext());
-                        ts.saveAccessToken(loginResponse.getToken());
-                        // FCM 토큰 등록
-                        FirebaseMessaging.getInstance().getToken()
-                                .addOnCompleteListener(task -> {
-                                    if (!task.isSuccessful()) {
-                                        Toast.makeText(LoginActivity.this, "FCM 토큰 가져오기 실패", Toast.LENGTH_SHORT).show();
-                                        return;
-                                    }
-                                    String token = task.getResult();
-                                    Log.d("FCM", "토큰: " + token);
-                                    ApiRepository.get(getApplicationContext())
-                                            .registerFcmToken(token, new ApiRepository.RepoCallback<Boolean>() {
-                                                @Override public void onSuccess(Boolean ok) {}
-                                                @Override public void onError(String message) { Toast.makeText(LoginActivity.this, "FCM 등록 실패", Toast.LENGTH_SHORT).show(); }
-                                            });
-                                });
+                @Override public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                    try {
+                        if (response.isSuccessful() && response.body() != null) {
+                            LoginResponse loginResponse = response.body();
 
-                        ApiRepository.get(getApplicationContext())
-                                .getMe(new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
-                                    @Override public void onSuccess(ApiRepository.UserProfile me) {
-                                        // 토큰 및 사용자 정보 SharedPreferences에 저장
-                                        SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
-                                        SharedPreferences.Editor editor = sp.edit();
-                                        editor.putString("jwt_token", loginResponse.getToken());
-                                        editor.putString("user_email", loginResponse.getEmail());
-                                        editor.putString("user_name", loginResponse.getName());
-                                        editor.apply();
+                            // 토큰 저장
+                            TokenStore ts = new TokenStore(getApplicationContext());
+                            ts.saveAccessToken(loginResponse.getToken());
 
-                                        Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
-                                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
-                                    }
-                                    @Override public void onError(String msg) {
-                                        // 유저 동기화 실패해도 일단 진입
-                                        Toast.makeText(LoginActivity.this, "내 정보 동기화 실패: " + msg, Toast.LENGTH_SHORT).show();
-                                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
-                                    }
-                                });
-                    } else {
-                        Toast.makeText(LoginActivity.this, "로그인 실패: 이메일 또는 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
+                            // FCM 토큰 등록 (실패해도 흐름 유지)
+                            FirebaseMessaging.getInstance().getToken()
+                                    .addOnCompleteListener(task -> {
+                                        if (!task.isSuccessful()) {
+                                            Log.w("FCM", "토큰 가져오기 실패", task.getException());
+                                        } else {
+                                            String fcm = task.getResult();
+                                            Log.d("FCM", "토큰: " + fcm);
+                                            ApiRepository.get(getApplicationContext())
+                                                    .registerFcmToken(fcm, new ApiRepository.RepoCallback<Boolean>() {
+                                                        @Override public void onSuccess(Boolean ok) { /* no-op */ }
+                                                        @Override public void onError(String message) {
+                                                            Log.w("FCM", "FCM 등록 실패: " + message);
+                                                        }
+                                                    });
+                                        }
+                                    });
+
+                            // 내 정보 조회 (실패해도 홈으로 진입)
+                            ApiRepository.get(getApplicationContext())
+                                    .getMe(new ApiRepository.RepoCallback<ApiRepository.UserProfile>() {
+                                        @Override public void onSuccess(ApiRepository.UserProfile me) {
+                                            SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
+                                            sp.edit()
+                                                    .putString("jwt_token", loginResponse.getToken())
+                                                    .putString("user_email", loginResponse.getEmail())
+                                                    .putString("user_name", loginResponse.getName())
+                                                    .putLong("user_id", me.id)
+                                                    .apply();
+
+                                            Toast.makeText(LoginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                                        }
+
+                                        @Override public void onError(String msg) {
+                                            Log.w("API", "내 정보 동기화 실패: " + msg);
+                                            Toast.makeText(LoginActivity.this, "내 정보 동기화 실패", Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                                        }
+                                    });
+
+                        } else {
+                            String err = null;
+                            if (response.errorBody() != null) {
+                                try { err = response.errorBody().string(); } catch (IOException ignore) {}
+                            }
+                            Toast.makeText(LoginActivity.this, "로그인 실패: 이메일/비밀번호 확인", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(LoginActivity.this, "일시적 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
                     }
                 }
 

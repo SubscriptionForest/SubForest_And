@@ -9,12 +9,12 @@ public class SubscriptionListItemDto {
     private String serviceName;
     @SerializedName("amount")
     private int amount;
-    @SerializedName("nextPaymentDate")
-    private String nextPaymentDate;
+    @SerializedName("nextBillingDate")
+    private String nextBillingDate;
     @SerializedName("logoUrl")
     private String logoUrl;
-    @SerializedName("daysLeft")
-    private int daysLeft; // daysLeft 필드 추가
+    @SerializedName("remainingDays")
+    private int remainingDays;
 
     public long getId() {
         return id;
@@ -28,16 +28,15 @@ public class SubscriptionListItemDto {
         return amount;
     }
 
-    public String getNextPaymentDate() {
-        return nextPaymentDate;
+    public String getNextBillingDate() {
+        return nextBillingDate;
     }
 
     public String getLogoUrl() {
         return logoUrl;
     }
 
-    // getDaysLeft() 메서드 추가
-    public int getDaysLeft() {
-        return daysLeft;
+    public int getRemainingDays() {
+        return remainingDays;
     }
 }

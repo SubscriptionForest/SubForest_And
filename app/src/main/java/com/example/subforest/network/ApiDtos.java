@@ -1,5 +1,6 @@
 package com.example.subforest.network;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public final class ApiDtos {
@@ -45,23 +46,58 @@ public final class ApiDtos {
     }
 
     public static class SubscriptionResponse {
-        public long id;
+        @SerializedName(value="id", alternate={"subscriptionId","subId","subscription_id"})
+        public Long id;
+
+        @SerializedName(value="serviceName", alternate={"name"})
         public String serviceName;
+
+        @SerializedName("logoUrl")
+        public String logoUrl;
+
+        @SerializedName("amount")
         public Integer amount;
-        public String startDate;       // yyyy-MM-dd
+
+        @SerializedName(value="repeatCycleDays", alternate={"repeatDays","repeat_cycle_days"})
         public Integer repeatCycleDays;
+
+        @SerializedName("startDate")
+        public String startDate;
+
+        @SerializedName("autoPayment")
         public Boolean autoPayment;
+
+        @SerializedName(value="isShared", alternate={"shared"})
         public Boolean isShared;
-        public String logoUrl;         // 서버가 내려주면 사용
-        public String nextPaymentDate; // 서버가 내려주면 사용
     }
 
     public static class SubscriptionListItemDto {
-        public long id;
+        @SerializedName(value="id", alternate={"subscriptionId","subId","subscription_id"})
+        public Long id;
+
+        @SerializedName(value="serviceName", alternate={"name"})
         public String serviceName;
+
+        @SerializedName("logoUrl")
+        public String logoUrl;
+
+        @SerializedName("amount")
         public Integer amount;
-        public String nextPaymentDate;
-        public String logoUrl; // 있으면 사용, 없으면 상세에서 보강
+
+        @SerializedName(value="repeatCycleDays", alternate={"repeatDays","repeat_cycle_days"})
+        public Integer repeatCycleDays;
+
+        @SerializedName(value="nextBillingDate", alternate={"nextDate"})
+        public String nextBillingDate;
+
+        @SerializedName("remainingDays")
+        public Long remainingDays;
+
+        @SerializedName("autoPayment")
+        public Boolean autoPayment;
+
+        @SerializedName(value="shared", alternate={"isShared"})
+        public Boolean shared;
     }
 
     // ===== 마이페이지 =====

@@ -4,7 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.RelativeLayout; // RelativeLayout import 추가
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,23 +41,34 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
                 .into(holder.serviceLogo);
 
         // 2. 남은 일수 아이콘 동적 설정
-        int remainingDaysIcon = getRemainingDaysIcon(payment.getDaysLeft());
+        int remainingDays = payment.getDaysLeft();
+        int remainingDaysIcon = getRemainingDaysIcon(remainingDays);
         holder.remainingDaysIcon.setImageResource(remainingDaysIcon);
 
         // 3. 텍스트 설정
-        holder.serviceName.setText(payment.getServiceName());
-        holder.amount.setText(String.format("%,d원", payment.getAmount()));
-        String paymentCycle;
-        switch (payment.getPaymentCycle()) {
-            case "30": holder.paymentCycle.setText("1개월"); break;
-            case "90": holder.paymentCycle.setText("3개월"); break;
-            case "180": holder.paymentCycle.setText("6개월"); break;
-            case "365": holder.paymentCycle.setText("1년");
-        }
-        holder.nextPaymentDate.setText("D-" + payment.getDaysLeft());
+        String serviceName = payment.getServiceName() != null ? payment.getServiceName() : "알 수 없음";
+        holder.serviceName.setText(serviceName);
 
-        // 4. 남은 일수에 따라 배경 설정 (새로 추가된 부분)
-        int backgroundRes = getRemainingDaysBackground(payment.getDaysLeft());
+        int amount = payment.getAmount();
+        holder.amount.setText(String.format("%,d원", amount));
+
+        String cycleText = "-";
+        String cycle = payment.getPaymentCycle();
+        if (cycle != null) {
+            switch (cycle) {
+                case "30":  cycleText = "1개월"; break;
+                case "90":  cycleText = "3개월"; break;
+                case "180": cycleText = "6개월"; break;
+                case "365": cycleText = "1년";   break;
+                default:    cycleText = cycle + "일"; break;
+            }
+        }
+        holder.paymentCycle.setText(cycleText);
+
+        holder.nextPaymentDate.setText("D-" + remainingDays);
+
+        // 4. 남은 일수에 따라 배경 설정
+        int backgroundRes = getRemainingDaysBackground(remainingDays);
         holder.rootLayout.setBackgroundResource(backgroundRes);
     }
 
@@ -71,7 +82,6 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
         notifyDataSetChanged();
     }
 
-    // 남은 일수에 따라 배경 Drawable을 반환하는 메서드 (새로 추가)
     private int getRemainingDaysBackground(int daysLeft) {
         if (daysLeft <= 3) {
             return R.drawable.item_background_red;
@@ -93,14 +103,12 @@ public class PaymentServiceAdapter extends RecyclerView.Adapter<PaymentServiceAd
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        // rootLayout 참조 추가
         RelativeLayout rootLayout;
         ImageView serviceLogo, remainingDaysIcon;
         TextView serviceName, amount, paymentCycle, nextPaymentDate;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // rootLayout 초기화 추가
             rootLayout = itemView.findViewById(R.id.payment_card_root);
             serviceLogo = itemView.findViewById(R.id.service_logo);
             remainingDaysIcon = itemView.findViewById(R.id.remaining_days_icon);

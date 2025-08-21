@@ -5,40 +5,40 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.Gravity;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.GridLayoutManager;
-
 
 import com.example.subforest.adapter.PaymentServiceAdapter;
 import com.example.subforest.adapter.SubscribedServiceAdapter;
 import com.example.subforest.model.DashboardSummaryResponse;
-import com.example.subforest.model.PaymentService;
 import com.example.subforest.model.SubscribedService;
 import com.example.subforest.model.UpcomingSubscriptionResponse;
 import com.example.subforest.network.ApiClient;
-import com.example.subforest.network.ApiService;
 import com.example.subforest.network.ApiDtos.PagedList;
 import com.example.subforest.network.ApiDtos.SubscriptionListItemDto;
+import com.example.subforest.network.ApiService;
 import com.example.subforest.ui.AddActivity;
 import com.example.subforest.ui.ListActivity;
 import com.example.subforest.ui.MypageActivity;
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.github.mikephil.charting.listener.OnChartValueSelectedListener; // 리스너 추가
 import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +55,8 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
     private BottomNavigationView bottomNavigationView;
     private String userName; // 사용자 이름
 
+    @Nullable private View emptyChartView; // 필요 시 사용
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +70,7 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         subscribedServicesRecyclerView = findViewById(R.id.subscribedServicesRecyclerView);
         paymentRecyclerView = findViewById(R.id.paymentRecyclerView);
+        // emptyChartView = findViewById(R.id.emptyChartView);
 
         // RecyclerView 설정
         setupRecyclerViews();
@@ -124,7 +127,6 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         subscribedServicesRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         subscribedServicesRecyclerView.setAdapter(new SubscribedServiceAdapter(new ArrayList<>()));
 
-
         // 결제 예정 서비스 RecyclerView (가로 스크롤)
         paymentRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         paymentRecyclerView.setAdapter(new PaymentServiceAdapter(new ArrayList<>()));
@@ -133,23 +135,35 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
     private void loadDashboardSummary() {
         // userId 가져오기
         long userId = getUserId();
-        if (userId == -1) return;
+        if (userId == -1) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            setupPieChart(Collections.emptyMap());
+            updateMonthlyCost(0);
+            return;
+        }
 
         ApiService api = ApiClient.get(this).create(ApiService.class);
         api.getDashboardSummary(userId).enqueue(new Callback<DashboardSummaryResponse>() {
             @Override public void onResponse(Call<DashboardSummaryResponse> call, Response<DashboardSummaryResponse> resp) {
-                if (resp.isSuccessful() && resp.body()!=null) {
+                if (resp.isSuccessful() && resp.body() != null) {
                     DashboardSummaryResponse s = resp.body();
-                    updateMonthlyCost(s.getTotalAmount());
-                    setupPieChart(s.getChartData());
+                    // 총액
+                    int amount = s.getTotalMonthlySpend();
+                    updateMonthlyCost(amount);
+                    // 파이 차트 데이터
+                    setupPieChart(s.toChartMap());
                 } else {
-                    Toast.makeText(HomeActivity.this, "대시보드 데이터 로드 실패", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HomeActivity.this, "대시보드 데이터 로드 실패(" + resp.code() + ")", Toast.LENGTH_SHORT).show();
+                    updateMonthlyCost(0);
+                    setupPieChart(Collections.emptyMap());
                 }
             }
 
             @Override
             public void onFailure(Call<DashboardSummaryResponse> call, Throwable t) {
-                Toast.makeText(HomeActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                updateMonthlyCost(0);
+                setupPieChart(Collections.emptyMap());
             }
         });
     }
@@ -161,22 +175,22 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         ApiService api = ApiClient.get(this).create(ApiService.class);
         api.getUpcomingSubscriptions(userId).enqueue(new Callback<UpcomingSubscriptionResponse>() {
             @Override public void onResponse(Call<UpcomingSubscriptionResponse> call, Response<UpcomingSubscriptionResponse> resp) {
-                if (resp.isSuccessful() && resp.body()!=null) {
-                    List<PaymentService> list = resp.body().getUpcomingPayments();
-                    PaymentServiceAdapter ad = (PaymentServiceAdapter) paymentRecyclerView.getAdapter();
-                    if (ad != null) ad.updateData(list != null ? list : new ArrayList<>());
+                PaymentServiceAdapter ad = (PaymentServiceAdapter) paymentRecyclerView.getAdapter();
+                if (resp.isSuccessful() && resp.body() != null && resp.body().getUpcomingPayments() != null) {
+                    ad.updateData(resp.body().getUpcomingPayments());
                 } else {
-                    Toast.makeText(HomeActivity.this, "결제 예정 서비스 로드 실패", Toast.LENGTH_SHORT).show();
+                    ad.updateData(new ArrayList<>());
                 }
             }
 
             @Override
             public void onFailure(Call<UpcomingSubscriptionResponse> call, Throwable t) {
-                Toast.makeText(HomeActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                PaymentServiceAdapter ad = (PaymentServiceAdapter) paymentRecyclerView.getAdapter();
+                ad.updateData(new ArrayList<>());
             }
         });
     }
-
 
     private void loadSubscribedServices() {
         long userId = getUserId();
@@ -186,21 +200,23 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         api.getSubscriptions(userId, 0, 50).enqueue(new Callback<PagedList<SubscriptionListItemDto>>() {
             @Override public void onResponse(Call<PagedList<SubscriptionListItemDto>> call,
                                              Response<PagedList<SubscriptionListItemDto>> resp) {
-                if (resp.isSuccessful() && resp.body()!=null && resp.body().content != null) {
-                    List<SubscriptionListItemDto> dtoList = resp.body().content;
+                SubscribedServiceAdapter ad = (SubscribedServiceAdapter) subscribedServicesRecyclerView.getAdapter();
+                if (resp.isSuccessful() && resp.body() != null && resp.body().content != null) {
                     List<SubscribedService> viewList = new ArrayList<>();
-                    for (SubscriptionListItemDto dto : dtoList) {
-                        // 어댑터가 요구하는 간단 모델로 매핑
+                    for (SubscriptionListItemDto dto : resp.body().content) {
                         viewList.add(new SubscribedService(dto.serviceName, dto.logoUrl));
                     }
-                    SubscribedServiceAdapter ad = (SubscribedServiceAdapter) subscribedServicesRecyclerView.getAdapter();
-                    if (ad != null) ad.updateData(viewList);
+                    ad.updateData(viewList);
                 } else {
-                    Toast.makeText(HomeActivity.this, "구독 중인 서비스 로드 실패", Toast.LENGTH_SHORT).show();
+                    ad.updateData(new ArrayList<>());
                 }
             }
-            @Override public void onFailure(Call<PagedList<SubscriptionListItemDto>> call, Throwable t) {
-                Toast.makeText(HomeActivity.this, "네트워크 오류", Toast.LENGTH_SHORT).show();
+
+            @Override
+            public void onFailure(Call<PagedList<SubscriptionListItemDto>> call, Throwable t) {
+                Toast.makeText(HomeActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                SubscribedServiceAdapter ad = (SubscribedServiceAdapter) subscribedServicesRecyclerView.getAdapter();
+                ad.updateData(new ArrayList<>());
             }
         });
     }
@@ -209,62 +225,82 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         totalCostText.setText(String.format("%,d원", totalCost));
     }
 
-    private void setupPieChart(Map<String, Integer> chartData) {
+    private void setupPieChart(@Nullable Map<String, Number> chartData) {
+        if (chartData == null || chartData.isEmpty()) {
+            pieChart.clear();
+            pieChart.getDescription().setEnabled(false);
+            pieChart.setNoDataText("표시할 데이터가 없습니다.");
+            if (emptyChartView != null) {
+                emptyChartView.setVisibility(View.VISIBLE);
+                pieChart.setVisibility(View.INVISIBLE);
+            }
+            return;
+        } else {
+            if (emptyChartView != null) {
+                emptyChartView.setVisibility(View.GONE);
+                pieChart.setVisibility(View.VISIBLE);
+            }
+        }
+
         ArrayList<PieEntry> entries = new ArrayList<>();
-        int[] colors = new int[]{
-                Color.parseColor("#F44336"),
-                Color.parseColor("#2196F3"),
-                Color.parseColor("#4CAF50")
-        };
-        int colorIndex = 0;
-        for (Map.Entry<String, Integer> entry : chartData.entrySet()) {
-            entries.add(new PieEntry(entry.getValue(), entry.getKey()));
+        for (Map.Entry<String, Number> entry : chartData.entrySet()) {
+            String label = entry.getKey() != null ? entry.getKey() : "";
+            float value = entry.getValue() != null ? entry.getValue().floatValue() : 0f;
+            if (value > 0f) entries.add(new PieEntry(value, label));
+        }
+
+        if (entries.isEmpty()) {
+            pieChart.clear();
+            pieChart.getDescription().setEnabled(false);
+            pieChart.setNoDataText("표시할 데이터가 없습니다.");
+            if (emptyChartView != null) {
+                emptyChartView.setVisibility(View.VISIBLE);
+                pieChart.setVisibility(View.INVISIBLE);
+            }
+            return;
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
+        int[] colors = new int[]{
+                Color.parseColor("#F44336"),
+                Color.parseColor("#2196F3"),
+                Color.parseColor("#4CAF50"),
+                Color.parseColor("#FF9800"),
+                Color.parseColor("#9C27B0")
+        };
         dataSet.setColors(colors);
         dataSet.setValueTextSize(0f);
-        PieData data = new PieData(dataSet);
 
+        PieData data = new PieData(dataSet);
         pieChart.setData(data);
         pieChart.getDescription().setEnabled(false);
         pieChart.setHoleRadius(50f);
         pieChart.setTransparentCircleRadius(55f);
         pieChart.setDrawEntryLabels(false);
-        pieChart.getLegend().setEnabled(false); // 범례 제거
+        pieChart.getLegend().setEnabled(false);
         pieChart.invalidate();
-        pieChart.setOnChartValueSelectedListener(this); // 클릭 리스너 추가
-    }
 
-    // PieChart 리스너 메서드 구현
+        pieChart.setOnChartValueSelectedListener(this);
+    }
 
     @Override
     public void onValueSelected(Entry e, Highlight h) {
-        // PieEntry 객체에서 플랫폼 이름과 금액 정보를 가져옵니다.
+        if (!(e instanceof PieEntry)) return;
         PieEntry entry = (PieEntry) e;
-        String platformName = entry.getLabel(); // 플랫폼 이름
-        float cost = entry.getValue(); // 금액
-
-        // 금액을 정수 형식으로 변환하고 쉼표를 추가합니다.
+        String platformName = entry.getLabel() != null ? entry.getLabel() : "";
+        float cost = entry.getValue();
         String formattedCost = String.format("%,.0f원", cost);
 
-        // Toast에 표시할 최종 메시지를 만듭니다.
-        String message = platformName + ": " + formattedCost;
-
-        // Toast를 만들고 위치를 설정한 후 보여줍니다.
-        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(this, platformName + ": " + formattedCost, Toast.LENGTH_SHORT);
         toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 150);
         toast.show();
     }
 
     @Override
-    public void onNothingSelected() {
-        // 아무것도 선택되지 않았을 때의 동작
-    }
+    public void onNothingSelected() {}
 
-    // 사용자 ID를 가져오는 임시 메서드
     private long getUserId() {
-        // 실제로는 로그인 후 SharedPreferences에 저장된 userId를 가져와야 함
-        return 1L;
+        SharedPreferences sp = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE);
+        return sp.getLong("user_id", -1L);
     }
 }

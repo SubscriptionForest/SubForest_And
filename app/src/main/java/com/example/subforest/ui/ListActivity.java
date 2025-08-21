@@ -129,7 +129,7 @@ public class ListActivity extends AppCompatActivity {
     private void applySort(int position) {
         List<ApiRepository.SubscriptionItem> copy = new ArrayList<>(current);
         switch (position) {
-            case 0: // 결제일 순
+            case 0: // 날짜 순
                 copy.sort(Comparator.comparingLong(ListActivity::nextPaymentEpoch));
                 break;
             case 1: // 이름 순
@@ -155,14 +155,6 @@ public class ListActivity extends AppCompatActivity {
         }
     }
 
-    /*private void showDeleteConfirmDialog(ApiRepository.SubscriptionItem item) {
-        new AlertDialog.Builder(this)
-                .setTitle("삭제하시겠습니까?")
-                .setMessage("'" + item.name + "' 구독을 삭제합니다.")
-                .setPositiveButton("예", (dialog, which) -> performDelete(item))
-                .setNegativeButton("아니요", null)
-                .show();
-    }*/
     private void showDeleteConfirmDialog(ApiRepository.SubscriptionItem item) {
         Dialog dialog = createDialog();
         LinearLayout layout = createBaseLayout();
@@ -199,6 +191,10 @@ public class ListActivity extends AppCompatActivity {
     }
 
     private void performDelete(ApiRepository.SubscriptionItem item) {
+        if (item == null || item.id <= 0) {
+            Toast.makeText(this, "삭제할 항목을 다시 선택해주세요.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         ApiRepository.get(this).deleteSubscription(item.id, new ApiRepository.RepoCallback<Boolean>() {
             @Override public void onSuccess(Boolean ok) {
                 for (Iterator<ApiRepository.SubscriptionItem> it = current.iterator(); it.hasNext();) {
@@ -210,7 +206,6 @@ public class ListActivity extends AppCompatActivity {
                 applySort(sortSpinner.getSelectedItemPosition());
                 Toast.makeText(ListActivity.this, "삭제되었습니다.", Toast.LENGTH_SHORT).show();
             }
-
             @Override public void onError(String msg) {
                 Toast.makeText(ListActivity.this, "삭제 실패: " + msg, Toast.LENGTH_SHORT).show();
             }

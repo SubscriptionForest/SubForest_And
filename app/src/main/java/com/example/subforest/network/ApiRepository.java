@@ -7,6 +7,7 @@ import android.os.Looper;
 import androidx.annotation.Nullable;
 import com.example.subforest.network.ApiDtos.*;
 import com.example.subforest.ui.ImageUtils;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,9 +26,28 @@ public class ApiRepository {
     public static class ServiceItem { public long id; public String name; public String logoUrl; }
     public static class CustomServiceItem { public long id; public String name; public String logoUrl; }
     public static class SubscriptionItem {
-        public long id; public String name; public int amount;
-        public String startDate; public int repeatDays;
-        public boolean autoPayment; public boolean shared;
+        @SerializedName(value = "id", alternate = {"subscriptionId", "subId", "subscription_id"})
+        public long id;
+
+        @SerializedName(value = "name", alternate = {"serviceName"})
+        public String name;
+
+        @SerializedName(value = "amount", alternate = {"price"})
+        public int amount;
+
+        @SerializedName(value = "startDate", alternate = {"start_date"})
+        public String startDate;
+
+        @SerializedName(value = "repeatDays", alternate = {"repeatCycleDays", "repeat_cycle_days"})
+        public int repeatDays;
+
+        @SerializedName("autoPayment")
+        public boolean autoPayment;
+
+        @SerializedName(value = "shared", alternate = {"isShared"})
+        public boolean shared;
+
+        @SerializedName(value = "logoUrl", alternate = {"logo_url"})
         @Nullable public String logoUrl;
     }
     public static class UserProfile {
@@ -153,16 +173,29 @@ public class ApiRepository {
     }
 
     public void deleteSubscription(long id, RepoCallback<Boolean> cb) {
-        api.deleteSubscription(id).enqueue(new Callback<Void>() {
-            @Override public void onResponse(Call<Void> call, Response<Void> r) {
-                if (r.isSuccessful()) main.post(() -> cb.onSuccess(true));
-                else postErr(cb, "삭제 실패(" + r.code() + ")");
+        if (id <= 0) {
+            cb.onError("잘못된 구독 ID 입니다.");
+            return;
+        }
+        api.deleteSubscription(id).enqueue(new retrofit2.Callback<Void>() {
+            @Override public void onResponse(Call<Void> call, Response<Void> resp) {
+                if (resp.code() == 204) {
+                    cb.onSuccess(true);
+                } else if (resp.code() == 404) {
+                    cb.onError("대상을 찾을 수 없습니다.");
+                } else if (resp.code() == 400) {
+                    cb.onError("요청 값이 올바르지 않습니다.");
+                } else {
+                    cb.onError("삭제 실패 (" + resp.code() + ")");
+                }
             }
-            @Override public void onFailure(Call<Void> call, Throwable t) { postErr(cb, t.getMessage()); }
+            @Override public void onFailure(Call<Void> call, Throwable t) {
+                cb.onError("네트워크 오류: " + t.getMessage());
+            }
         });
     }
 
-    /** 목록 → 상세 보강해서 UI모델 구성 */
+    // 목록 → 상세 보강해서 UI모델 구성
     public void getSubscriptions(RepoCallback<List<SubscriptionItem>> cb) {
         api.getSubscriptions(uid(), 0, 100).enqueue(new Callback<PagedList<SubscriptionListItemDto>>() {
             @Override public void onResponse(Call<PagedList<SubscriptionListItemDto>> call, Response<PagedList<SubscriptionListItemDto>> r) {

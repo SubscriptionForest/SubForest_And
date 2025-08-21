@@ -60,6 +60,12 @@ public class EditSubActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add); // 같은 레이아웃 재사용
 
+        long id = getIntent().getLongExtra("id", -1L);
+        if (id <= 0L) {
+            finish();
+            return;
+        }
+
         bindViews();
         initSpinner();
         initDatePicker();

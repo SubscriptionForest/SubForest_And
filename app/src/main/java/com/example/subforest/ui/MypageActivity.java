@@ -164,6 +164,8 @@ public class MypageActivity extends AppCompatActivity {
 
             if (current.isEmpty() || newPw.isEmpty() || confirm.isEmpty()) {
                 Toast.makeText(this, "모든 항목을 입력해주세요.", Toast.LENGTH_SHORT).show();
+            } else if (newPw.length() < 8) {
+                Toast.makeText(this, "비밀번호는 8자리 이상이어야 합니다.", Toast.LENGTH_SHORT).show();
             } else if (!newPw.equals(confirm)) {
                 Toast.makeText(this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
             } else {
